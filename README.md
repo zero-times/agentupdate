@@ -178,4 +178,4 @@ agentupdate/
 
 ## 下一步
 
-按最新完成情况检查审核本地候选包和追加功能。公开 GitHub Release 另行授权；正式分发前补齐固定源码、签名公证与独立设备验收。
+v0.2.0 已经用户验收，并通过 GitHub Desktop 提交到 `main`、推送版本标签和发布 [GitHub Release](https://github.com/zero-times/agentupdate/releases/tag/v0.2.0)。发布包来自干净源码提交，提供构建清单、安装验证记录和校验文件；采用用户接受的 ad-hoc 签名，Developer ID 签名公证与独立设备验收仍待补齐。
