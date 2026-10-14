@@ -39,6 +39,7 @@ async fn open_cli(
     instance_id: String,
     path: String,
     previous_path: Option<String>,
+    profile: Option<String>,
 ) -> Result<(), error::AppError> {
     use tauri::Manager;
     tauri::async_runtime::spawn_blocking(move || {
@@ -57,7 +58,7 @@ async fn open_cli(
             .ok_or_else(|| {
                 error::AppError::new("CLI_INSTANCE", "CLI 安装实例已失效，请重新扫描。")
             })?;
-        cli_launch::launch(&installation, &path)?;
+        cli_launch::launch_with_profile(&installation, &path, profile.as_deref())?;
         service::with_store(&state, |s| {
             cli_launch::save_project(&s.root, &path, previous_path.as_deref())
         })?;

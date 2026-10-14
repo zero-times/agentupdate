@@ -108,6 +108,47 @@ fn shell_launch_preserves_hostile_paths_and_selected_instance() {
     assert!(cli_launch::terminal_command(&installation, &project).is_err());
 }
 
+#[test]
+fn deepseek_launch_requires_profile_and_defaults_to_web() {
+    let f = Fixture::new();
+    let mut installation = f.installation();
+    installation.agent_id = AgentId::Deepseek;
+    fs::write(&installation.command_path, "#!/bin/sh\n[ \"$1\" = '--profile' ] && [ -n \"$2\" ] || exit 2\nprintf '%s' \"$2\" > launched-profile\n").unwrap();
+    let project = f.directory("project");
+    for profile in [None, Some("my-tui")] {
+        let command =
+            cli_launch::terminal_command_with_profile(&installation, &project, profile).unwrap();
+        assert!(Command::new("/bin/zsh")
+            .args(["-c", &command])
+            .status()
+            .unwrap()
+            .success());
+        assert_eq!(
+            fs::read_to_string(project.join("launched-profile")).unwrap(),
+            profile.unwrap_or("web")
+        );
+    }
+    for profile in [
+        "",
+        "desktop",
+        "DESKTOP",
+        "..",
+        "../web",
+        "web;touch unsafe",
+        "$(touch unsafe)",
+        "--help",
+    ] {
+        assert!(
+            cli_launch::terminal_command_with_profile(&installation, &project, Some(profile))
+                .is_err()
+        );
+    }
+    installation.agent_id = AgentId::Codex;
+    assert!(
+        cli_launch::terminal_command_with_profile(&installation, &project, Some("web")).is_err()
+    );
+}
+
 // Opt-in native Terminal integration; starts only a fixture, never a real Agent.
 #[test]
 #[ignore = "opens macOS Terminal; run explicitly for native launch acceptance"]

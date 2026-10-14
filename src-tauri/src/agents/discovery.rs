@@ -43,6 +43,13 @@ impl DiscoveryContext {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
             .ok_or_else(|| AppError::new("HOME_UNAVAILABLE", "无法确定当前用户目录。"))?;
+        #[cfg(feature = "desktop-validation")]
+        if let Some(directory) = std::env::var_os("AGENTUPDATE_TEST_DISCOVERY_DIR") {
+            return Ok(Self {
+                home,
+                directories: vec![PathBuf::from(directory)],
+            });
+        }
         let mut directories: Vec<_> = std::env::var_os("PATH")
             .map(|x| {
                 std::env::split_paths(&x)

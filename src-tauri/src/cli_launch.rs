@@ -1,4 +1,8 @@
-use crate::{agents::discovery::Installation, error::AppError, platform};
+use crate::{
+    agents::{discovery::Installation, AgentId},
+    error::AppError,
+    platform,
+};
 use std::{
     fs,
     os::unix::fs::PermissionsExt,
@@ -80,6 +84,37 @@ fn quote(value: &str) -> String {
 }
 
 pub fn terminal_command(installation: &Installation, project: &Path) -> Result<String, AppError> {
+    terminal_command_with_profile(installation, project, None)
+}
+
+pub fn terminal_command_with_profile(
+    installation: &Installation,
+    project: &Path,
+    profile: Option<&str>,
+) -> Result<String, AppError> {
+    let arguments = if installation.agent_id == AgentId::Deepseek {
+        let profile = profile.unwrap_or("web");
+        if profile.is_empty()
+            || profile.starts_with('-')
+            || profile.len() > 128
+            || profile.eq_ignore_ascii_case("desktop")
+            || matches!(profile, "." | "..")
+            || !profile
+                .bytes()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.'))
+        {
+            return Err(AppError::new("CLI_PROFILE", "请输入有效的 Deepseek profile 名称（字母、数字、点、下划线或连字符）；desktop 由桌面应用管理。"));
+        }
+        format!(" --profile {}", quote(profile))
+    } else {
+        if profile.is_some() {
+            return Err(AppError::new(
+                "CLI_PROFILE",
+                "此 CLI 不接受 Deepseek profile。",
+            ));
+        }
+        String::new()
+    };
     let resolved = fs::canonicalize(&installation.command_path)
         .map_err(|_| AppError::new("CLI_COMMAND_CHANGED", "CLI 命令已失效，请重新扫描。"))?;
     let metadata = fs::metadata(&resolved)
@@ -116,19 +151,28 @@ pub fn terminal_command(installation: &Installation, project: &Path) -> Result<S
         .to_str()
         .ok_or_else(|| AppError::new("CLI_COMMAND_PATH", "CLI 环境路径无效。"))?;
     Ok(format!(
-        "cd -- {} && PATH={}:\"$PATH\" {}",
+        "cd -- {} && PATH={}:\"$PATH\" {}{}",
         quote(project),
         quote(prefix),
-        quote(command)
+        quote(command),
+        arguments
     ))
 }
 
 pub fn launch(installation: &Installation, path: &str) -> Result<PathBuf, AppError> {
+    launch_with_profile(installation, path, None)
+}
+
+pub fn launch_with_profile(
+    installation: &Installation,
+    path: &str,
+    profile: Option<&str>,
+) -> Result<PathBuf, AppError> {
     if !cfg!(target_os = "macos") {
         return Err(AppError::unsupported_platform());
     }
     let directory = project_directory(path)?;
-    let command = terminal_command(installation, &directory)?;
+    let command = terminal_command_with_profile(installation, &directory, profile)?;
     platform::process::run(Path::new("/usr/bin/osascript"), &["-e".into(), TERMINAL_SCRIPT.into(), command], &directory,
         &[("PATH".into(), "/usr/bin:/bin:/usr/sbin:/sbin".into())], Duration::from_secs(30), 4096)
         .map_err(|_| AppError::new("CLI_TERMINAL_OPEN", "无法打开终端。请在系统设置 → 隐私与安全性 → 自动化中允许 AgentUpdate 控制终端，然后重试。"))?;

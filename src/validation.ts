@@ -41,11 +41,26 @@ export async function validateCliLaunch(overview: AppOverview) {
   if (dialog()) throw new Error(dialog().textContent!);
   const paths = await cliProjects();
   if (paths.length !== 1 || paths[0] !== second) throw new Error('Launch recent project mismatch');
+  const deepseekCard = () => document.querySelector('[data-agent="deepseek"]')!;
+  await readyButton('打开', deepseekCard);
+  for (const profile of ['web', 'my-tui']) {
+    clickButton('打开', deepseekCard());
+    await until(() => !!dialog()?.querySelector('[aria-label="Deepseek profile"]'));
+    const field = dialog().querySelector<HTMLInputElement>('[aria-label="Deepseek profile"]')!;
+    if (field.value !== 'web') throw new Error('Deepseek default profile is missing');
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, profile);
+    field.dispatchEvent(new Event('input', {bubbles:true}));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    clickButton('在此目录打开 CLI', dialog());
+    await until(() => !dialog() || !!dialog().querySelector('[role="alert"]'), 45000);
+    if (dialog()) throw new Error(dialog().textContent!);
+  }
   await invoke('finish_cli_launch_validation', {checks: {
     navigationWorks: await validateNavigation(),
     domainCall: (await getSupport('codex')).id === overview.agents[0].id,
     recentProjectsPersist: true, editReplacesPath: true, addProjectWorks: true, invalidProjectShowsError: true,
     terminalRequestCompleted: true,
+    deepseekDefaultAndCustomProfiles: true,
     invalidInstanceDenied: await denied('open_cli', {instanceId:'/bin/sh',path:second,previousPath:null}),
     arbitraryCommandDenied: await denied('run_arbitrary_command'),
     arbitraryFileDenied: await denied('read_arbitrary_file', {path:'/etc/hosts'}),
