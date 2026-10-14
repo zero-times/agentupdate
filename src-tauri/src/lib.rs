@@ -567,6 +567,7 @@ mod validation {
     #[derive(Deserialize, Serialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     pub struct Checks {
+        pub navigation_works: bool,
         pub domain_call: bool,
         pub invalid_agent_denied: bool,
         pub restricted_command_denied: bool,
@@ -585,6 +586,7 @@ mod validation {
     #[derive(Deserialize, Serialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     pub struct WorkflowChecks {
+        pub navigation_works: bool,
         pub rendered: bool,
         pub selected_both: bool,
         pub plan_confirmed: bool,

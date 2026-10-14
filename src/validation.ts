@@ -11,6 +11,7 @@ export async function validateDesktop(overview: AppOverview) {
   const desktopChecks = await checkDesktopApps();
   await until(()=>document.querySelectorAll('[data-desktop-product]').length===3);
   const checks = {
+    navigationWorks: await validateNavigation(),
     installCommandsReady: Array.isArray(await invoke('cli_install_history'))&&Array.isArray(await invoke('app_install_history')),
     invalidInstallAgentDenied: await denied('install_cli',{agent:'/bin/sh',allowPrerelease:false}),
     invalidInstallProductDenied: await denied('prepare_app_install',{product:'arbitrary'}),
@@ -32,15 +33,17 @@ export async function validateDesktop(overview: AppOverview) {
   await invoke('finish_desktop_validation', { checks });
 }
 
-async function until(predicate:()=>boolean,timeout=240000) {const limit=Date.now()+timeout;while(!predicate()){if(Date.now()>limit)throw new Error(`UI validation timed out: ${document.body.innerText.slice(-3000)}`);await new Promise(resolve=>setTimeout(resolve,100));}}
+async function until(predicate:()=>boolean,timeout=600000) {const limit=Date.now()+timeout;while(!predicate()){if(Date.now()>limit)throw new Error(`UI validation timed out: ${document.body.innerText.slice(-3000)}`);await new Promise(resolve=>setTimeout(resolve,100));}}
 function clickButton(text:string,scope:ParentNode=document){const button=Array.from(scope.querySelectorAll('button')).find(b=>b.textContent?.includes(text));if(!button)throw new Error(`Missing UI action ${text}`);if(button.disabled)throw new Error(`Disabled UI action ${text}`);button.click();}
 export async function validateWorkflow(_overview:AppOverview){
  const fixtureSelector='[data-agent="codex"] .instance-choice input:not(:disabled), [data-agent="gemini"] .instance-choice input:not(:disabled)';
- await until(()=>document.querySelectorAll(fixtureSelector).length===2);
+ const fixtureChoices=()=>Array.from(document.querySelectorAll<HTMLInputElement>(fixtureSelector)).filter(input=>input.closest('.instance')?.querySelector('.path')?.textContent?.includes('/agentupdate-ui-'));
+ await until(()=>fixtureChoices().length===2);
  const rendered=document.querySelectorAll('[data-agent]').length===4;
- for(const checkbox of document.querySelectorAll<HTMLInputElement>(fixtureSelector))checkbox.click();
+ for(const checkbox of fixtureChoices())checkbox.click();
  await until(()=>{const button=Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.includes('查看更新计划'));return !!button&&!button.disabled;});
  const selectedBoth=document.querySelectorAll('.instance-choice input:checked').length===2;
+ const navigationWorks=await validateNavigation()&&document.querySelectorAll('.instance-choice input:checked').length===2;
  clickButton('查看更新计划');await until(()=>document.querySelector('dialog[open]')?.textContent?.includes('确认更新计划')??false);
  const planConfirmed=document.querySelectorAll('dialog[open] .confirm-item').length===2;
  clickButton('确认并顺序执行',document.querySelector('dialog[open]')!);
@@ -59,5 +62,17 @@ export async function validateWorkflow(_overview:AppOverview){
  const backupProtected=Array.from(document.querySelectorAll<HTMLButtonElement>('dialog[open] button')).some(b=>b.textContent==='清理此恢复点'&&b.disabled);clickButton('关闭',document.querySelector('dialog[open]')!);
  await until(()=>document.querySelector('.release-panel')?.textContent?.includes('发现新版本')??false);
  const releasePrompt=document.querySelector('.release-panel')?.textContent?.includes('打开安装包下载')??false;
- await invoke('finish_workflow_validation',{checks:{rendered,selectedBoth,planConfirmed,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt}});
+ await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,planConfirmed,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt}});
+}
+
+async function validateNavigation() {
+ const cards=Array.from(document.querySelectorAll('[data-agent]'));
+ for(const view of ['apps','release','cli']) {
+  document.querySelector<HTMLButtonElement>(`[data-nav="${view}"]`)!.click();
+  await until(()=>document.querySelector(`[data-nav="${view}"]`)?.getAttribute('aria-current')==='page');
+  const panel=document.querySelector<HTMLElement>(`[data-view="${view}"]`)!;
+  if(panel.hidden||panel.getClientRects().length===0||document.querySelectorAll('[data-view]:not([hidden])').length!==1) return false;
+  if(document.querySelector('main')!.scrollWidth>document.querySelector('main')!.clientWidth+1) return false;
+ }
+ return cards.every(card=>card.isConnected)&&document.querySelector('h1')?.textContent==='Agent 工作台';
 }

@@ -127,6 +127,6 @@ try {
   if (mounted) await run('/usr/bin/hdiutil', ['detach', mount]);
   await rm(root, { recursive: true, force: true });
   await mkdir(path.join(repo, 'docs/evidence'), { recursive: true });
-  await writeFile(path.join(repo, 'docs/evidence/v' + manifest.version + '-package.json'), `${JSON.stringify(evidence, null, 2)}\n`);
+  await writeFile(process.env.AGENTUPDATE_PACKAGE_EVIDENCE || path.join(repo, 'docs/evidence/v' + manifest.version + '-package.json'), `${JSON.stringify(evidence, null, 2)}\n`);
   await writeFile(path.join(output, 'package-validation.json'), `${JSON.stringify(evidence, null, 2)}\n`);
 }

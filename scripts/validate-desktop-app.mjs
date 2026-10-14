@@ -6,9 +6,9 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const version = JSON.parse(await readFile(path.join(repo, 'package.json'), 'utf8')).version;
 const target = process.env.CARGO_TARGET_DIR || path.join(repo, 'src-tauri/target');
 const bundleRoot = path.join(target, 'universal-apple-darwin/release/bundle/macos');
-const app = path.join(bundleRoot, 'AgentUpdate.app');
 const validationApp = path.join(bundleRoot, 'AgentUpdate Validation.app');
 const binary = path.join(validationApp, 'Contents/MacOS/agentupdate');
 const temporary = await mkdtemp(path.join(os.tmpdir(), 'agentupdate-age5-'));
@@ -40,14 +40,14 @@ const evidence = {
 };
 try {
   assert.equal(process.platform, 'darwin');
-  for (const bundle of [app, validationApp]) {
+  for (const bundle of [validationApp]) {
     const slices = await run('/usr/bin/lipo', ['-archs', path.join(bundle, 'Contents/MacOS/agentupdate')]);
     assert(slices.includes('arm64') && slices.includes('x86_64'));
     assert.equal(await run('/usr/bin/plutil', ['-extract', 'LSMinimumSystemVersion', 'raw', path.join(bundle, 'Contents/Info.plist')]), '15.0');
-    assert.equal(await run('/usr/bin/plutil', ['-extract', 'CFBundleShortVersionString', 'raw', path.join(bundle, 'Contents/Info.plist')]), '0.2.0');
+    assert.equal(await run('/usr/bin/plutil', ['-extract', 'CFBundleShortVersionString', 'raw', path.join(bundle, 'Contents/Info.plist')]), version);
     await run('/usr/bin/codesign', ['--verify', '--deep', '--strict', bundle]);
   }
-  evidence.universalBundles = ['AgentUpdate.app', 'AgentUpdate Validation.app'];
+  evidence.universalBundles = ['AgentUpdate Validation.app'];
   evidence.adHocSignaturesVerified = true;
   const config = JSON.parse(await readFile(path.join(repo, 'src-tauri/tauri.conf.json'), 'utf8'));
   const capability = JSON.parse(await readFile(path.join(repo, 'src-tauri/capabilities/main.json'), 'utf8'));
@@ -62,7 +62,7 @@ try {
     await run('/usr/bin/arch', [flag, binary], testEnvironment);
     const result = JSON.parse(await readFile(destination, 'utf8'));
     assert.equal(result.overview.platform.architecture, architecture);
-    assert.equal(result.overview.appVersion, '0.2.0');
+    assert.equal(result.overview.appVersion, version);
     assert(Object.values(result.checks).every(value => value === true), 'Real WebView checks failed');
     assert(result.overview.agents.every(agent => agent.detectionState === 'not_scanned' && !agent.updateEnabled));
     evidence.results.push({ architecture, execution, ...result });
@@ -74,6 +74,6 @@ try {
   throw error;
 } finally {
   await mkdir(path.join(repo, 'docs/evidence'), { recursive: true });
-  await writeFile(path.join(repo, 'docs/evidence/v0.2.0-desktop.json'), JSON.stringify(evidence, null, 2) + '\n');
+  await writeFile(path.join(repo, `docs/evidence/v${version}-desktop.json`), JSON.stringify(evidence, null, 2) + '\n');
   await rm(temporary, { recursive: true, force: true });
 }

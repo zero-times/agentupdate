@@ -5,6 +5,8 @@ fn packaged_release_fixture_matches_both_architectures_and_build_version() {
     let path = std::env::var("AGENTUPDATE_RELEASE_FIXTURE").unwrap();
     let payload: serde_json::Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
     let latest = releases::parse(&payload).unwrap().unwrap();
+    let previous_version =
+        std::env::var("AGENTUPDATE_RELEASE_FROM").unwrap_or_else(|_| "0.0.0".into());
     assert_eq!(latest.version, env!("CARGO_PKG_VERSION"));
     assert_eq!(latest.tag, format!("v{}", env!("CARGO_PKG_VERSION")));
     let expected = format!("AgentUpdate-{}-macos-universal.dmg", latest.version);
@@ -15,7 +17,7 @@ fn packaged_release_fixture_matches_both_architectures_and_build_version() {
         1000,
     );
     for architecture in ["aarch64", "x86_64"] {
-        let result = releases::evaluate(&fixture_cache, "0.0.0", architecture, false);
+        let result = releases::evaluate(&fixture_cache, &previous_version, architecture, false);
         assert_eq!(result.state, "update_available");
         let asset = result.asset.unwrap();
         assert_eq!(asset.name, expected);

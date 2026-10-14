@@ -1,7 +1,9 @@
 {
   "productName": "AgentUpdate Validation",
   "identifier": "work.x5brain.agentupdate.validation",
-  "build": { "beforeBuildCommand": "npm run build:validation-web" },
+  "build": {
+    "beforeBuildCommand": "npm run build:validation-web"
+  },
   "app": {
     "security": {
       "capabilities": [
@@ -17,6 +19,17 @@
           ]
         }
       ]
-    }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "AgentUpdate Validation",
+        "width": 720,
+        "height": 540,
+        "minWidth": 720,
+        "minHeight": 540,
+        "resizable": true
+      }
+    ]
   }
 }
