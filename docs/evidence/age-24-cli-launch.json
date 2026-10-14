@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-14T05:42:28.278Z",
+  "status": "passed",
+  "limitations": [
+    "Native Apple Silicon macOS; physical Intel not tested. Starts an isolated fixture CLI, not a live Agent."
+  ],
+  "result": {
+    "architecture": "aarch64",
+    "checks": {
+      "addProjectWorks": true,
+      "arbitraryCommandDenied": true,
+      "arbitraryFileDenied": true,
+      "domainCall": true,
+      "editReplacesPath": true,
+      "invalidInstanceDenied": true,
+      "invalidProjectShowsError": true,
+      "navigationWorks": true,
+      "recentProjectsPersist": true,
+      "terminalRequestCompleted": true
+    }
+  },
+  "nativeTerminalCwdExact": true,
+  "noShellInjection": true
+}

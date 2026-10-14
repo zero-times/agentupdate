@@ -1,8 +1,55 @@
 import { invoke } from '@tauri-apps/api/core';
-import { checkDesktopApps, getSupport, type AppOverview } from './api/desktop';
+import { checkDesktopApps, cliProjects, getSupport, type AppOverview } from './api/desktop';
 
 async function denied(command: string, args?: Record<string, unknown>) {
   try { await invoke(command, args); return false; } catch { return true; }
+}
+
+export async function validateCliLaunch(overview: AppOverview) {
+  const card = () => document.querySelector('[data-agent="codex"]')!;
+  await readyButton('打开', card);
+  const command = card().querySelector('.instance > .path')!.textContent!;
+  const base = command.slice(0, command.indexOf('/.local/bin/'));
+  const first = `${base}/first project`;
+  const second = `${base}/中文 project ' " ; $(touch unsafe) \`touch unsafe\``;
+  const dialog = () => document.querySelector<HTMLDialogElement>('.cli-launch[open]')!;
+  async function input(value: string) {
+    const field = dialog().querySelector<HTMLInputElement>('input')!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, value);
+    field.dispatchEvent(new Event('input', {bubbles: true}));
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  clickButton('打开', card());
+  await until(() => !!dialog()?.querySelector('input'));
+  await input('/missing-age24-project');
+  clickButton('保存目录', dialog());
+  await until(() => !!dialog().querySelector('[role="alert"]'));
+  await input(first); clickButton('保存目录', dialog());
+  await until(() => dialog()?.textContent?.includes('项目目录已保存') ?? false);
+  await input(second); clickButton('保存目录', dialog());
+  await until(() => dialog()?.textContent?.includes('项目目录已保存') ?? false);
+  if ((await cliProjects()).length !== 1) throw new Error('Editing did not replace the recent project');
+  clickButton('新增目录', dialog()); await input(first); clickButton('保存目录', dialog());
+  await until(() => dialog()?.textContent?.includes('项目目录已保存') ?? false);
+  clickButton('取消', dialog()); await until(() => !dialog());
+  clickButton('打开', card()); await until(() => !!dialog()?.querySelector('input'));
+  if (dialog().querySelector('input')!.value !== first || (await cliProjects()).length !== 2) throw new Error('Recent project persistence failed');
+  await input(second);
+  // Updating an existing entry deduplicates it and launches only the discovered fixture.
+  clickButton('在此目录打开 CLI', dialog());
+  await until(() => !dialog() || !!dialog().querySelector('[role="alert"]'), 45000);
+  if (dialog()) throw new Error(dialog().textContent!);
+  const paths = await cliProjects();
+  if (paths.length !== 1 || paths[0] !== second) throw new Error('Launch recent project mismatch');
+  await invoke('finish_cli_launch_validation', {checks: {
+    navigationWorks: await validateNavigation(),
+    domainCall: (await getSupport('codex')).id === overview.agents[0].id,
+    recentProjectsPersist: true, editReplacesPath: true, addProjectWorks: true, invalidProjectShowsError: true,
+    terminalRequestCompleted: true,
+    invalidInstanceDenied: await denied('open_cli', {instanceId:'/bin/sh',path:second,previousPath:null}),
+    arbitraryCommandDenied: await denied('run_arbitrary_command'),
+    arbitraryFileDenied: await denied('read_arbitrary_file', {path:'/etc/hosts'}),
+  }});
 }
 
 // The release binary does not register these validation commands or grant their capability.

@@ -4,6 +4,7 @@ fn main() {
     if std::env::var_os("CARGO_FEATURE_DESKTOP_VALIDATION").is_none() {
         for name in [
             "restricted_probe",
+            "finish_cli_launch_validation",
             "finish_desktop_validation",
             "finish_workflow_validation",
         ] {
@@ -22,6 +23,9 @@ fn main() {
                 "get_app_overview",
                 "check_app_release",
                 "check_desktop_apps",
+                "get_cli_projects",
+                "save_cli_project",
+                "open_cli",
                 "install_cli",
                 "cli_install_history",
                 "rollback_cli_install",
@@ -49,6 +53,7 @@ fn main() {
                 "preview_rollback",
                 "rollback_update",
                 "restricted_probe",
+                "finish_cli_launch_validation",
                 "finish_desktop_validation",
                 "finish_workflow_validation",
             ]
@@ -57,6 +62,9 @@ fn main() {
                 "get_app_overview",
                 "check_app_release",
                 "check_desktop_apps",
+                "get_cli_projects",
+                "save_cli_project",
+                "open_cli",
                 "install_cli",
                 "cli_install_history",
                 "rollback_cli_install",

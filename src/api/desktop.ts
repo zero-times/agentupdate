@@ -24,6 +24,7 @@ export type AppOverview = {
   appRelease: { state: 'not_checked'; source: string };
   validationMode: boolean;
   validationWorkflow: boolean;
+  validationCliLaunch: boolean;
 };
 
 // Browser previews do not fabricate local machine state.
@@ -42,6 +43,9 @@ export type Installation = {
   supported: boolean; versionVerified: boolean; reason: string | null;
 };
 export type DiscoveryReport = { instances: Installation[]; warnings: string[] };
+export function cliProjects(): Promise<string[]> { return invoke('get_cli_projects'); }
+export function saveCliProject(path: string, previousPath?: string): Promise<string[]> { return invoke('save_cli_project', {path, previousPath: previousPath ?? null}); }
+export function openCli(instanceId: string, path: string, previousPath?: string): Promise<void> { return invoke('open_cli', {instanceId, path, previousPath: previousPath ?? null}); }
 export type AvailableVersion = { version: string; prerelease: boolean; tarball: string; integrity: string };
 export type VersionCatalog = { agentId: AgentId; latestStable: string; versions: AvailableVersion[]; state:'update_available'|'up_to_date'|'local_newer'|'unknown_version' };
 export function discoverAgents(extraPaths: string[] = []): Promise<DiscoveryReport> {

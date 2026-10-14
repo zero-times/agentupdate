@@ -14,6 +14,7 @@
             "main"
           ],
           "permissions": [
+            "allow-finish-cli-launch-validation",
             "allow-finish-desktop-validation",
             "allow-finish-workflow-validation"
           ]

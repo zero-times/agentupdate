@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CliLaunch } from './CliLaunch';
 import {OperationProgress,useOperationProgress,initialProgress} from './OperationProgress';
 import { installCli, cliInstalls, rollbackCliInstall, type CliInstall, restoreDetails, exportTransaction, cleanupRestore, revealExport, type RestoreDetails, type ExportResult, inspectInterrupted, type RecoveryReport, cancelPlan, executePlan, createPlan, discoverAgents, errorMessage, listVersions, planHistory, previewRollback, rollbackUpdate, type AgentId, type DiscoveryReport, type Installation, type RollbackPreview, type Stage, type UpdatePlan, type UpdateTransaction, type VersionCatalog } from '../api/desktop';
 
@@ -8,6 +9,7 @@ const recoverable = (tx: UpdateTransaction) => !!tx.restorePointId && ['succeede
 function time(value: number) { return new Date(value).toLocaleString('zh-CN'); }
 
 export function Workspace() {
+  const [launch, setLaunch] = useState<Installation>();
   const [installs,setInstalls]=useState<CliInstall[]>([]);
   const [material,setMaterial]=useState<RestoreDetails>();
   const [exportConfirm,setExportConfirm]=useState(false);
@@ -83,6 +85,7 @@ export function Workspace() {
   }
   function toggle(i:Installation,checked:boolean) {setSelected(v=>({...v,[i.id]:checked}));if(checked&&!catalogs[i.id]&&!versionBusy[i.id]) void versions(i.agentId,!!pre[i.agentId],i.id);}
   return <>
+    {launch&&<CliLaunch installation={launch} onClose={()=>setLaunch(undefined)}/>}
     {startup?.busy&&<p className="notice">其他进程正在处理任务，未修改其状态。结束后重新打开应用以检查未完成事务。</p>}
     {!!startup?.items.length&&<div className="notice" role="status">发现 {startup.items.length} 项未完成或待恢复任务。没有自动重装或判定成功，请在更新记录中处理。{startup.items.filter(i=>!i.materialReady).map(i=><p key={i.transactionId}>恢复材料无法验证（{i.materialError}）。请保留应用数据、包旁保留目录与配置副本，按人工恢复说明处理。</p>)}</div>}
     <div className="section-heading workspace-heading"><div><p className="eyebrow">安装实例 / LOCAL TOOLS</p><h2>选择要更新的安装实例</h2></div><button onClick={()=>void scan()} disabled={scanBusy||!!working}>↻ {scanBusy?'正在扫描…':'重新扫描'}</button></div>
@@ -93,6 +96,7 @@ export function Workspace() {
       {report?.instances.filter(i=>i.agentId===agent).map(i=><div className={`instance ${selected[i.id]?'chosen':''}`} key={i.id}>
         <label className="instance-choice"><input type="checkbox" checked={!!selected[i.id]} disabled={!i.supported||!!working} onChange={e=>toggle(i,e.target.checked)}/><strong>{i.version?`v${i.version}`:'版本未验证'}</strong><span>{i.architecture} · {i.source} · {i.supported?'可更新':'仅查看'}</span></label>
         <p className="path" title={i.commandPath}>{i.commandPath}</p><details className="command-detail"><summary>实际命令与安装位置</summary><p className="path">{i.resolvedCommand}</p></details>
+        <button className="open-cli-button" disabled={!!working||scanBusy||!!agentBusy[agent]} onClick={()=>setLaunch(i)}>打开</button>
         {i.supported&&catalogs[i.id]?.state==='update_available'&&progress[i.id]?.phase!=='succeeded'&&!versionBusy[i.id]&&<button className="primary" disabled={!!working||scanBusy||!!agentBusy[agent]||(agent==='deepseek'&&!pre.deepseek)} onClick={()=>void updateInstances([i],true)}>{agent==='deepseek'?'一键升级官方 latest':'一键升级最新稳定版'}</button>}
         {progress[i.id]&&<OperationProgress progress={progress[i.id]} label={`${names[agent]} 升级进度`}/>}
         {catalogs[i.id]&&<p className="muted">官方{agent==='deepseek'?' latest':'稳定'}版本：{catalogs[i.id]!.latestStable} · {({update_available:'有新版本可升级',up_to_date:'已是最新版本',local_newer:'本机版本较新',unknown_version:'版本无法比较'})[catalogs[i.id]!.state]}{catalogs[i.id]!.versions.find(v=>v.version===catalogs[i.id]!.latestStable)?.prerelease?'（预发行版）':''}</p>}

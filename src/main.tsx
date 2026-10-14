@@ -24,7 +24,7 @@ function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const main = useRef<HTMLElement>(null);
   useEffect(() => { void getOverview().then(setOverview).catch(e => setError(errorMessage(e))); }, []);
-  useEffect(() => { if (import.meta.env.MODE === 'desktop-validation' && overview?.validationMode) void import('./validation').then(m => overview.validationWorkflow ? m.validateWorkflow(overview) : m.validateDesktop(overview)).catch(e => setError(errorMessage(e))); }, [overview]);
+  useEffect(() => { if (import.meta.env.MODE === 'desktop-validation' && overview?.validationMode) void import('./validation').then(m => overview.validationCliLaunch ? m.validateCliLaunch(overview) : overview.validationWorkflow ? m.validateWorkflow(overview) : m.validateDesktop(overview)).catch(e => setError(errorMessage(e))); }, [overview]);
   useEffect(() => { main.current?.scrollTo(0, 0); }, [view]);
   const page = pages[view];
   return <div className="app-shell">

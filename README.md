@@ -183,3 +183,5 @@ agentupdate/
 v0.2.0 已经用户验收，并通过 GitHub Desktop 提交到 `main`、推送版本标签和发布 [GitHub Release](https://github.com/zero-times/agentupdate/releases/tag/v0.2.0)。发布包来自干净源码提交，提供构建清单、安装验证记录和校验文件；采用用户接受的 ad-hoc 签名，Developer ID 签名公证与独立设备验收仍待补齐。
 
 最近交互更新：[v0.2.2 安装进度与直接升级](docs/v0.2.2-progress.md)。CLI、桌面应用与本应用更新均显示进度，点击升级后直接安装；每个工具可主动检测，已最新时隐藏升级按钮。
+
+CLI 项目启动：每个安装实例提供“打开”按钮，可选择、修改或新增最近项目目录，并在系统终端中直接启动对应 CLI。[操作与验证说明](docs/cli-launch.md)。

@@ -2,6 +2,7 @@ pub mod agents;
 pub mod artifacts;
 pub mod backup;
 pub mod cli_install;
+pub mod cli_launch;
 pub mod deploy;
 pub mod desktop_apps;
 pub mod error;
@@ -11,6 +12,60 @@ pub mod releases;
 pub mod service;
 pub mod storage;
 pub mod updater;
+
+#[tauri::command]
+fn get_cli_projects(app: tauri::AppHandle) -> Result<Vec<String>, error::AppError> {
+    use tauri::Manager;
+    service::with_store(&app.state::<service::AppState>(), |s| {
+        cli_launch::projects(&s.root)
+    })
+}
+
+#[tauri::command]
+fn save_cli_project(
+    app: tauri::AppHandle,
+    path: String,
+    previous_path: Option<String>,
+) -> Result<Vec<String>, error::AppError> {
+    use tauri::Manager;
+    service::with_store(&app.state::<service::AppState>(), |s| {
+        cli_launch::save_project(&s.root, &path, previous_path.as_deref())
+    })
+}
+
+#[tauri::command]
+async fn open_cli(
+    app: tauri::AppHandle,
+    instance_id: String,
+    path: String,
+    previous_path: Option<String>,
+) -> Result<(), error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _operation = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前安装或恢复结束。"))?;
+        let installation = state
+            .installations
+            .lock()
+            .map_err(|_| error::AppError::new("CLI_INSTANCE", "请重新扫描 CLI。"))?
+            .iter()
+            .find(|i| i.id == instance_id)
+            .cloned()
+            .ok_or_else(|| {
+                error::AppError::new("CLI_INSTANCE", "CLI 安装实例已失效，请重新扫描。")
+            })?;
+        cli_launch::launch(&installation, &path)?;
+        service::with_store(&state, |s| {
+            cli_launch::save_project(&s.root, &path, previous_path.as_deref())
+        })?;
+        Ok(())
+    })
+    .await
+    .map_err(|_| error::AppError::new("CLI_TERMINAL_OPEN", "终端打开操作未完成。"))?
+}
 
 #[tauri::command]
 async fn install_cli(
@@ -720,6 +775,22 @@ mod validation {
         Ok(())
     }
     #[tauri::command]
+    pub fn finish_cli_launch_validation(
+        app: tauri::AppHandle,
+        checks: std::collections::BTreeMap<String, bool>,
+    ) -> Result<(), String> {
+        let destination = std::env::var_os("AGENTUPDATE_VALIDATION_RESULT")
+            .ok_or("Missing validation destination")?;
+        let value = serde_json::json!({"architecture":std::env::consts::ARCH,"checks":checks});
+        std::fs::write(
+            destination,
+            serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())?;
+        app.exit(0);
+        Ok(())
+    }
+    #[tauri::command]
     pub fn restricted_probe() -> bool {
         true
     }
@@ -747,6 +818,9 @@ pub fn run() {
         get_app_overview,
         check_app_release,
         check_desktop_apps,
+        get_cli_projects,
+        save_cli_project,
+        open_cli,
         install_cli,
         cli_install_history,
         rollback_cli_install,
@@ -779,6 +853,9 @@ pub fn run() {
         get_app_overview,
         check_app_release,
         check_desktop_apps,
+        get_cli_projects,
+        save_cli_project,
+        open_cli,
         install_cli,
         cli_install_history,
         rollback_cli_install,
@@ -806,6 +883,7 @@ pub fn run() {
         preview_rollback,
         rollback_update,
         validation::restricted_probe,
+        validation::finish_cli_launch_validation,
         validation::finish_desktop_validation,
         validation::finish_workflow_validation
     ]);
