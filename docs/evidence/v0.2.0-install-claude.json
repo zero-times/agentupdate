@@ -1,0 +1,7 @@
+{
+  "agent": "claude",
+  "homeIsolated": true,
+  "installed": true,
+  "rollbackToAbsent": true,
+  "version": "2.1.296"
+}

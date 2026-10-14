@@ -1,0 +1,55 @@
+[
+  {
+    "product": "codex",
+    "name": "Codex app",
+    "installed": [],
+    "latestVersion": "26.623.141536",
+    "state": "not_installed",
+    "checkedAt": 1791869577851,
+    "metadataSource": "https://formulae.brew.sh/api/cask/codex-app.json",
+    "officialPage": "https://openai.com/codex/",
+    "downloadAvailable": true,
+    "errorCode": null,
+    "channelNote": "公开 Homebrew 目录中的稳定版本；厂商分批发布和账户渠道可能不同。"
+  },
+  {
+    "product": "claude",
+    "name": "Claude app",
+    "installed": [
+      {
+        "path": "/Applications/Claude.app",
+        "version": "2.31226.1",
+        "build": "2.31226.1",
+        "state": "up_to_date"
+      }
+    ],
+    "latestVersion": "2.31226.1",
+    "state": "up_to_date",
+    "checkedAt": 1791869577851,
+    "metadataSource": "https://downloads.claude.ai/releases/darwin/universal/RELEASES.json",
+    "officialPage": "https://claude.ai/download",
+    "downloadAvailable": true,
+    "errorCode": null,
+    "channelNote": "Claude 官方公开稳定更新渠道；账户或分批发布资格由官方应用决定。"
+  },
+  {
+    "product": "chatgpt",
+    "name": "ChatGPT / 集成 Codex",
+    "installed": [
+      {
+        "path": "/Applications/ChatGPT.app",
+        "version": "26.1007.30912",
+        "build": "20156",
+        "state": "up_to_date"
+      }
+    ],
+    "latestVersion": "26.1007.30912",
+    "state": "up_to_date",
+    "checkedAt": 1791869577851,
+    "metadataSource": "https://formulae.brew.sh/api/cask/chatgpt.json",
+    "officialPage": "https://chatgpt.com/download/",
+    "downloadAvailable": true,
+    "errorCode": null,
+    "channelNote": "公开 Homebrew 目录中的稳定版本；厂商分批发布和账户渠道可能不同。"
+  }
+]

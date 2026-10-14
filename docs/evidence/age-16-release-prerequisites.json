@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-13T01:29:01Z",
+  "host": { "architecture": "arm64", "macOS": "27.0.1" },
+  "checks": [
+    {
+      "command": "security find-identity -v -p codesigning",
+      "validIdentityCount": 4,
+      "developerIdApplicationCount": 0,
+      "availableIdentityTypes": ["Apple Development", "Apple Distribution"]
+    },
+    {
+      "command": "xcrun notarytool history --keychain-profile agentupdate --output-format json",
+      "result": "No Keychain password item found for profile: agentupdate"
+    },
+    {
+      "command": "npm run package:mac",
+      "exitCode": 1,
+      "result": "Set AGENTUPDATE_SIGNING_IDENTITY to an installed Developer ID Application identity, or use --candidate for local review.",
+      "failedBeforeBuild": true,
+      "unsignedFallback": false
+    },
+    {
+      "command": "git rev-parse --verify HEAD",
+      "result": "fatal: Needed a single revision",
+      "sourceCommit": null
+    }
+  ],
+  "acceptance": {
+    "cleanMacOS15": "not available in this run",
+    "physicalIntel": "not available in this run",
+    "developerIdSigning": "blocked",
+    "appleNotarization": "blocked"
+  },
+  "publicTagCreated": false,
+  "publicReleaseCreated": false,
+  "distributionReady": false
+}

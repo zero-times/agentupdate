@@ -1,0 +1,7 @@
+{
+  "agent": "gemini",
+  "homeIsolated": true,
+  "installed": true,
+  "rollbackToAbsent": true,
+  "version": "0.63.0"
+}

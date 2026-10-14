@@ -1,0 +1,18 @@
+[
+  {
+    "detectedAfterReopen": true,
+    "killedBySignal": 9,
+    "locksReleasedByKernel": true,
+    "noSuccessOrAutomaticInstall": true,
+    "offlineRestoreVerified": true,
+    "phase": "installing"
+  },
+  {
+    "detectedAfterReopen": true,
+    "killedBySignal": 9,
+    "locksReleasedByKernel": true,
+    "noSuccessOrAutomaticInstall": true,
+    "offlineRestoreVerified": true,
+    "phase": "recovering"
+  }
+]

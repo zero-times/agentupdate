@@ -1,0 +1,47 @@
+[
+  {
+    "agent": "codex",
+    "architecture": "arm64",
+    "configurationBackupReadable": true,
+    "configurationBytes": 15103,
+    "installed": "0.162.1",
+    "latest": "0.162.1",
+    "oldInstallationBytes": 338135792,
+    "source": "homebrew",
+    "supported": true
+  },
+  {
+    "agent": "claude",
+    "architecture": "arm64",
+    "configurationBackupReadable": true,
+    "configurationBytes": 126204,
+    "installed": "2.1.287",
+    "latest": "2.1.287",
+    "oldInstallationBytes": 227829106,
+    "source": "homebrew",
+    "supported": true
+  },
+  {
+    "agent": "deepseek",
+    "architecture": "arm64",
+    "configurationBackupReadable": true,
+    "configurationBytes": 40218,
+    "installed": "0.2.0-rc.2",
+    "latest": "0.2.0-rc.2",
+    "oldInstallationBytes": 444701646,
+    "source": "user_npm",
+    "supported": true
+  },
+  {
+    "desktop": "codex",
+    "latest": "26.623.141536",
+    "sha256": "d948dc36b8358f5a2924b033fbf08398eea7860dc9e97cb5ab9b354490283a0a",
+    "trustedPackage": true
+  },
+  {
+    "desktop": "claude",
+    "latest": "2.31226.1",
+    "sha256": "3ce879784507147267e656c81c5eea96979f4db462c3569a4d9cb9e5c22d1953",
+    "trustedPackage": true
+  }
+]

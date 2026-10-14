@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-12",
+  "hostArchitecture": "arm64",
+  "results": [
+    {
+      "architecture": "aarch64",
+      "execution": "native",
+      "smoke": {
+        "platform": "macos",
+        "architecture": "aarch64",
+        "osVersion": "27.0.1",
+        "childProcess": true,
+        "isolatedFileRoundtrip": true,
+        "restrictiveFilePermissions": true
+      },
+      "webview": {
+        "report": {
+          "architecture": "aarch64",
+          "childProcess": true,
+          "isolatedFileRoundtrip": true,
+          "osVersion": "27.0.1",
+          "platform": "macos",
+          "restrictiveFilePermissions": true
+        },
+        "webviewChecks": {
+          "arbitraryCommandDenied": true,
+          "arbitraryFileDenied": true,
+          "restrictedCommandDenied": true
+        }
+      }
+    },
+    {
+      "architecture": "x86_64",
+      "execution": "Rosetta",
+      "smoke": {
+        "platform": "macos",
+        "architecture": "x86_64",
+        "osVersion": "27.0.1",
+        "childProcess": true,
+        "isolatedFileRoundtrip": true,
+        "restrictiveFilePermissions": true
+      },
+      "webview": {
+        "report": {
+          "architecture": "x86_64",
+          "childProcess": true,
+          "isolatedFileRoundtrip": true,
+          "osVersion": "27.0.1",
+          "platform": "macos",
+          "restrictiveFilePermissions": true
+        },
+        "webviewChecks": {
+          "arbitraryCommandDenied": true,
+          "arbitraryFileDenied": true,
+          "restrictedCommandDenied": true
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Intel execution uses Rosetta on Apple Silicon, not physical Intel hardware.",
+    "Ad-hoc signature only; Developer ID signing and notarization belong to AGE-16.",
+    "macOS 15 minimum is configured, not runtime-tested on macOS 15."
+  ],
+  "architectures": "x86_64 arm64",
+  "minimumSystemVersion": "15.0",
+  "adHocSignatureVerified": true,
+  "status": "passed"
+}

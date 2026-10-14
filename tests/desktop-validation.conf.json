@@ -1,0 +1,22 @@
+{
+  "productName": "AgentUpdate Validation",
+  "identifier": "work.x5brain.agentupdate.validation",
+  "build": { "beforeBuildCommand": "npm run build:validation-web" },
+  "app": {
+    "security": {
+      "capabilities": [
+        "main",
+        {
+          "identifier": "desktop-validation",
+          "windows": [
+            "main"
+          ],
+          "permissions": [
+            "allow-finish-desktop-validation",
+            "allow-finish-workflow-validation"
+          ]
+        }
+      ]
+    }
+  }
+}

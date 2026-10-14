@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-12T08:01:07.812Z",
+  "architecture": "arm64",
+  "checks": {
+    "arbitraryCommandDenied": true,
+    "arbitraryFileDenied": true,
+    "domainCall": true,
+    "filesystemPluginDenied": true,
+    "invalidAgentDenied": true,
+    "rendered": true,
+    "restrictedCommandDenied": true,
+    "shellPluginDenied": true
+  },
+  "scope": "Real React UI and restricted Rust IPC; existing discovery is read-only. Update/rollback service verified separately by isolated real roundtrip; complete UI operation path will be exercised in AGE-15."
+}

@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-13T01:41:53.041Z",
+  "version": "0.1.0",
+  "host": {
+    "architecture": "arm64",
+    "macosVersion": "27.0.1"
+  },
+  "web": {
+    "typeCheck": "passed",
+    "productionBuild": "passed",
+    "validationFrontendExcluded": true
+  },
+  "rust": {
+    "format": "passed",
+    "defaultSuitePassed": 43,
+    "defaultSuiteFailures": 0,
+    "childEntryPointPasses": 1
+  },
+  "integration": {
+    "arm64": {
+      "status": "passed",
+      "execution": "native Apple Silicon",
+      "checks": {
+        "backupProtected": true,
+        "bothRestored": true,
+        "bothUpdated": true,
+        "planConfirmed": true,
+        "privateLogExported": true,
+        "releasePrompt": true,
+        "rendered": true,
+        "selectedBoth": true
+      },
+      "originalPackageTreesExact": true
+    },
+    "x86_64": {
+      "status": "passed",
+      "execution": "Rosetta on Apple Silicon",
+      "checks": {
+        "backupProtected": true,
+        "bothRestored": true,
+        "bothUpdated": true,
+        "planConfirmed": true,
+        "privateLogExported": true,
+        "releasePrompt": true,
+        "rendered": true,
+        "selectedBoth": true
+      },
+      "originalPackageTreesExact": true
+    },
+    "realFaults": {
+      "status": "passed",
+      "architecture": "arm64",
+      "results": [
+        {
+          "agent": "codex",
+          "fault": "AGENTUPDATE_TEST_FAIL_SWAP_AGENT",
+          "needsRecovery": true,
+          "originalPackageExact": true,
+          "retryAfterRecoveryFailure": true
+        },
+        {
+          "agent": "codex",
+          "fault": "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT",
+          "needsRecovery": true,
+          "originalPackageExact": true,
+          "retryAfterRecoveryFailure": true
+        },
+        {
+          "agent": "gemini",
+          "fault": "AGENTUPDATE_TEST_FAIL_SWAP_AGENT",
+          "needsRecovery": true,
+          "originalPackageExact": true,
+          "retryAfterRecoveryFailure": true
+        },
+        {
+          "agent": "gemini",
+          "fault": "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT",
+          "needsRecovery": true,
+          "originalPackageExact": true,
+          "retryAfterRecoveryFailure": true
+        }
+      ]
+    }
+  },
+  "appReleaseLive": {
+    "state": "no_releases",
+    "currentVersion": "0.1.0",
+    "latest": null,
+    "asset": null,
+    "checkedAt": 1791850700480,
+    "successfulAt": 1791850700480,
+    "cached": false,
+    "errorCode": null,
+    "retryAfter": 0
+  },
+  "productionBundle": {
+    "checkedAt": "2026-10-13T00:55:33.567Z",
+    "app": "experiments/desktop-spike/src-tauri/target/universal-apple-darwin/release/bundle/macos/AgentUpdate.app",
+    "version": "0.1.0",
+    "identifier": "work.x5brain.agentupdate",
+    "minimumSystemVersion": "15.0",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "binarySha256": "aedce688381c522bf322f80965a24ec67660fb77c05b4bb89ae4ebebbeea92b0",
+    "productionBackendCommands": true,
+    "validationCommandNameMarkers": {
+      "finish_workflow_validation": false,
+      "finish_desktop_validation": false,
+      "restricted_probe": false
+    },
+    "frontendAssets": [
+      "index-B_LOWthq.js",
+      "index-DHfjq5t_.css"
+    ],
+    "defaultFeatureBuildCommand": "tauri build --target universal-apple-darwin --bundles app -- --offline --locked",
+    "signatureIntegrityVerified": true,
+    "signingKind": "ad-hoc",
+    "notarized": false,
+    "developerInjectionMarkers": {
+      "AGENTUPDATE_TEST_FAIL_SWAP_AGENT": false,
+      "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT": false,
+      "AGENTUPDATE_TEST_FAIL_RESTORE_AGENT": false,
+      "AGENTUPDATE_TEST_CATALOG_DIR": false,
+      "AGENTUPDATE_TEST_OFFLINE": false,
+      "AGENTUPDATE_VALIDATION_WORKFLOW": false
+    },
+    "diagnosticRedactionMarkerNote": "AGENTUPDATE_VALIDATION_RESULT remains in the diagnostic redaction denylist; production has no validation finish handlers or validation frontend.",
+    "installerProducedAtFunctionalCheck": false
+  },
+  "developerIdAvailable": false,
+  "notaryProfileConfigured": false,
+  "readyForWholeVersionReview": false,
+  "blockers": [
+    "Developer ID signing and Apple notarization are not completed.",
+    "Source must be committed and rebuilt from a clean release checkout before distribution.",
+    "Clean macOS 15 and physical Intel installation, two-tool roundtrip and uninstall acceptance remain pending."
+  ],
+  "age16BindingPreserved": "01a12f9e-f18f-7313-a28e-ca5964cafa49",
+  "publicReleaseCreated": false,
+  "functionalCheckedAt": "2026-10-13T00:55:33.799Z",
+  "packaging": {
+    "manifest": "docs/evidence/age-16-release-manifest.json",
+    "smokeEvidence": "docs/evidence/age-16-package.json",
+    "releaseContractEvidence": "docs/evidence/age-16-release-contract.json",
+    "finalConsistencyEvidence": "docs/evidence/v0.1.0-final-consistency.json",
+    "artifactDirectory": "release-artifacts/v0.1.0/candidate-20261013T012754075Z",
+    "runId": "candidate-20261013T012754075Z",
+    "status": "candidate-built",
+    "installerProduced": true,
+    "archiveFormat": "ZIP",
+    "artifacts": [
+      {
+        "name": "AgentUpdate-0.1.0-macos-universal.app.zip",
+        "bytes": 10025123,
+        "sha256": "a503824320b228df2f71dd41be40891139453864fae8fbe2489aae78ac71fec8",
+        "matches": true
+      },
+      {
+        "name": "AgentUpdate-0.1.0-macos-universal.dmg",
+        "bytes": 10972352,
+        "sha256": "07bc55e8554d2a09985d7108377fc484607a07898be8418844e803b7c7f259e6",
+        "matches": true
+      },
+      {
+        "name": "source-manifest.json",
+        "bytes": 9268,
+        "sha256": "ee3e50f7ce56389f44d0594167438ef15f3822e8e7eb854958d92bef8d09a4a1",
+        "matches": true
+      },
+      {
+        "name": "release-notes.md",
+        "bytes": 2203,
+        "sha256": "2f20ebd48c493788aa906fffe854b22908bdf4ba73d3d6b7ce905d73034c2803",
+        "matches": true
+      },
+      {
+        "name": "release-check-fixture.json",
+        "bytes": 555,
+        "sha256": "157ca894ccd31da27b308376bc858e4cfffe1457a67e19e60b24ccba92824163",
+        "matches": true
+      }
+    ],
+    "signing": {
+      "kind": "ad-hoc",
+      "verified": true
+    },
+    "notarization": {
+      "app": {
+        "submitted": false
+      },
+      "diskImage": {
+        "submitted": false
+      }
+    },
+    "distributionReady": false,
+    "source": {
+      "fileCount": 65,
+      "mismatches": [],
+      "sha256": "0bab938e6fc43809d55d44f2bf92d6fcbf9c34faab07e6cf24e5216dee8b2e35",
+      "aggregateVerified": true
+    }
+  },
+  "resolvedSincePreviousAudit": [
+    "Missing installer, release manifest, SHA256SUMS and Release notes supplied locally and in cloud attachments.",
+    "Archive renamed to actual .app.zip; independent release-artifacts directory survives frontend builds."
+  ],
+  "localFunctionalEvidenceComplete": true,
+  "acceptance": {
+    "functionalIntegration": "passed on native Apple Silicon and Rosetta, using real tools in isolation",
+    "developerIdSigning": "blocked",
+    "appleNotarization": "blocked",
+    "cleanMacOS15": "pending",
+    "physicalIntel": "pending",
+    "packagedToolRoundtrip": "pending",
+    "sourceCommit": "missing; clean release rebuild required before distribution"
+  },
+  "cloudSnapshot": {
+    "parent": {
+      "identifier": "AGE-2",
+      "status": "blocked",
+      "version": 5
+    },
+    "children": [
+      {
+        "identifier": "AGE-15",
+        "status": "in_progress",
+        "version": 7
+      },
+      {
+        "identifier": "AGE-17",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-14",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-13",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-12",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-11",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-10",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-9",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-8",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-7",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-5",
+        "status": "in_progress",
+        "version": 6
+      },
+      {
+        "identifier": "AGE-4",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-3",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-6",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-16",
+        "status": "blocked",
+        "version": 9
+      }
+    ],
+    "age16AttachmentCursor": "3012",
+    "age16CommentCursor": "3013"
+  }
+}

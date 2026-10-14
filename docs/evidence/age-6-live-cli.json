@@ -1,0 +1,35 @@
+{
+  "instances": [
+    {
+      "id": "codex-3932d232a9a851bed3413dc3dc9106384e2b1fc3e80d906cbd1accb2c52336db",
+      "agentId": "codex",
+      "commandPath": "/opt/homebrew/bin/codex",
+      "resolvedCommand": "/opt/homebrew/Caskroom/codex/0.162.1/bin/codex",
+      "packageRoot": null,
+      "prefix": null,
+      "nodePath": null,
+      "version": "0.162.1",
+      "architecture": "arm64",
+      "source": "homebrew",
+      "supported": false,
+      "versionVerified": true,
+      "reason": "Homebrew 安装仅显示版本；指定版本恢复尚未验证。"
+    },
+    {
+      "id": "claude-36bb70b82723c226a4615092447abc48c068837a439c90c9e0ab7f7fd4225fbd",
+      "agentId": "claude",
+      "commandPath": "/opt/homebrew/bin/claude",
+      "resolvedCommand": "/opt/homebrew/Caskroom/claude-code/2.1.287/claude",
+      "packageRoot": "/opt/homebrew/Caskroom/claude-code",
+      "prefix": "/opt/homebrew",
+      "nodePath": null,
+      "version": "2.1.287",
+      "architecture": "arm64",
+      "source": "homebrew",
+      "supported": true,
+      "versionVerified": true,
+      "reason": null
+    }
+  ],
+  "warnings": []
+}

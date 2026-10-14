@@ -1,0 +1,7 @@
+{
+  "agent": "codex",
+  "homeIsolated": true,
+  "installed": true,
+  "rollbackToAbsent": true,
+  "version": "0.162.1"
+}

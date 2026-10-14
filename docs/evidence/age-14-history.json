@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-12T08:22:16.577489+00:00",
+  "testSuite": "history_retention",
+  "passed": 4,
+  "checks": [
+    "diagnostic whitelist rejects sensitive configuration, local paths and unknown codes",
+    "full export requires explicit confirmation and verifies all payloads",
+    "private export modes 700/600",
+    "last usable and active restore points protected",
+    "older cleanup preserves history and newer material",
+    "operation lock excludes export and cleanup competition"
+  ]
+}

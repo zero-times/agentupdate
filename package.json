@@ -1,0 +1,38 @@
+{
+  "name": "agentupdate",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:app": "tauri dev",
+    "check:web": "tsc --noEmit",
+    "build:web": "npm run check:web && vite build",
+    "build:validation-web": "npm run check:web && vite build --mode desktop-validation",
+    "check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --release --locked",
+    "check": "npm run check:web && npm run check:rust && npm run test:rust",
+    "tauri": "tauri",
+    "build:app": "tauri build --bundles app",
+    "build:mac": "tauri build --target universal-apple-darwin --bundles app",
+    "package:mac": "node scripts/package-macos.mjs",
+    "build:validation": "tauri build --target universal-apple-darwin --bundles app --features desktop-validation --config tests/desktop-validation.conf.json",
+    "validate:desktop": "node scripts/validate-desktop-app.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.12.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "typescript": "^6.0.0",
+    "vite": "8.3.4"
+  }
+}

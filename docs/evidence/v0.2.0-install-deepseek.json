@@ -1,0 +1,7 @@
+{
+  "agent": "deepseek",
+  "homeIsolated": true,
+  "installed": true,
+  "rollbackToAbsent": true,
+  "version": "0.2.0-rc.2"
+}

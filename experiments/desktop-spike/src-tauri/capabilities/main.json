@@ -1,0 +1,6 @@
+{
+  "identifier": "main-validation",
+  "description": "Only the bundled main WebView may run fixed validation operations.",
+  "windows": ["main"],
+  "permissions": ["allow-run-validation", "allow-finish-validation"]
+}

@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-10-13T00:45:57.030Z",
+  "architecture": "arm64",
+  "isolation": "Temporary explicit prefixes and artificial configuration; no daily Agent modifications or model requests",
+  "phase": "faults",
+  "artifactSource": "Previously fetched official npm cache; source URL and SHA512 revalidated by the production updater",
+  "results": [
+    {
+      "agent": "codex",
+      "fault": "AGENTUPDATE_TEST_FAIL_SWAP_AGENT",
+      "needsRecovery": true,
+      "originalPackageExact": true,
+      "retryAfterRecoveryFailure": true
+    },
+    {
+      "agent": "codex",
+      "fault": "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT",
+      "needsRecovery": true,
+      "originalPackageExact": true,
+      "retryAfterRecoveryFailure": true
+    },
+    {
+      "agent": "gemini",
+      "fault": "AGENTUPDATE_TEST_FAIL_SWAP_AGENT",
+      "needsRecovery": true,
+      "originalPackageExact": true,
+      "retryAfterRecoveryFailure": true
+    },
+    {
+      "agent": "gemini",
+      "fault": "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT",
+      "needsRecovery": true,
+      "originalPackageExact": true,
+      "retryAfterRecoveryFailure": true
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-13T00:55:33.567Z",
+  "app": "experiments/desktop-spike/src-tauri/target/universal-apple-darwin/release/bundle/macos/AgentUpdate.app",
+  "version": "0.1.0",
+  "identifier": "work.x5brain.agentupdate",
+  "minimumSystemVersion": "15.0",
+  "architectures": [
+    "x86_64",
+    "arm64"
+  ],
+  "binarySha256": "aedce688381c522bf322f80965a24ec67660fb77c05b4bb89ae4ebebbeea92b0",
+  "productionBackendCommands": true,
+  "validationCommandNameMarkers": {
+    "finish_workflow_validation": false,
+    "finish_desktop_validation": false,
+    "restricted_probe": false
+  },
+  "frontendAssets": [
+    "index-B_LOWthq.js",
+    "index-DHfjq5t_.css"
+  ],
+  "defaultFeatureBuildCommand": "tauri build --target universal-apple-darwin --bundles app -- --offline --locked",
+  "signatureIntegrityVerified": true,
+  "signingKind": "ad-hoc",
+  "notarized": false,
+  "installerProduced": false,
+  "developerInjectionMarkers": {
+    "AGENTUPDATE_TEST_FAIL_SWAP_AGENT": false,
+    "AGENTUPDATE_TEST_FAIL_VERIFY_AGENT": false,
+    "AGENTUPDATE_TEST_FAIL_RESTORE_AGENT": false,
+    "AGENTUPDATE_TEST_CATALOG_DIR": false,
+    "AGENTUPDATE_TEST_OFFLINE": false,
+    "AGENTUPDATE_VALIDATION_WORKFLOW": false
+  },
+  "diagnosticRedactionMarkerNote": "AGENTUPDATE_VALIDATION_RESULT remains in the diagnostic redaction denylist; production has no validation finish handlers or validation frontend."
+}

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "product": "AgentUpdate",
+  "version": "0.1.0",
+  "tag": "v0.1.0",
+  "releaseUrl": "https://github.com/zero-times/agentupdate/releases/tag/v0.1.0",
+  "runId": "candidate-20261013T012754075Z",
+  "status": "candidate-built",
+  "distributionReady": false,
+  "publicReleaseCreated": false,
+  "signing": {
+    "kind": "ad-hoc",
+    "verified": true
+  },
+  "notarization": {
+    "app": {
+      "submitted": false
+    },
+    "diskImage": {
+      "submitted": false
+    }
+  },
+  "blockers": [
+    "Developer ID signing and Apple notarization are not completed.",
+    "Source must be committed and rebuilt from a clean release checkout before distribution.",
+    "Clean macOS 15 and physical Intel installation, two-tool roundtrip and uninstall acceptance remain pending."
+  ],
+  "acceptance": {
+    "cleanMacOS15": "pending",
+    "physicalIntel": "pending",
+    "packagedToolRoundtrip": "pending"
+  },
+  "checkedAt": "2026-10-13T01:27:54.154Z",
+  "artifacts": [
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.app.zip",
+      "bytes": 10025123,
+      "sha256": "a503824320b228df2f71dd41be40891139453864fae8fbe2489aae78ac71fec8"
+    },
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.dmg",
+      "bytes": 10972352,
+      "sha256": "07bc55e8554d2a09985d7108377fc484607a07898be8418844e803b7c7f259e6"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 9268,
+      "sha256": "ee3e50f7ce56389f44d0594167438ef15f3822e8e7eb854958d92bef8d09a4a1"
+    },
+    {
+      "name": "release-notes.md",
+      "bytes": 2203,
+      "sha256": "2f20ebd48c493788aa906fffe854b22908bdf4ba73d3d6b7ce905d73034c2803"
+    },
+    {
+      "name": "release-check-fixture.json",
+      "bytes": 555,
+      "sha256": "157ca894ccd31da27b308376bc858e4cfffe1457a67e19e60b24ccba92824163"
+    }
+  ],
+  "sourceSha256": "0bab938e6fc43809d55d44f2bf92d6fcbf9c34faab07e6cf24e5216dee8b2e35",
+  "sourceCommit": null,
+  "sourceDirty": true,
+  "architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "minimumSystemVersion": "15.0",
+  "binarySha256": "aedce688381c522bf322f80965a24ec67660fb77c05b4bb89ae4ebebbeea92b0",
+  "productionCommandsVerified": true,
+  "validationMarkersAbsent": true
+}

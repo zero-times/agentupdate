@@ -1,0 +1,10 @@
+{
+  "homeIsolated": true,
+  "installationVerified": true,
+  "officialDownloadVerified": true,
+  "product": "claude",
+  "rollbackToAbsent": true,
+  "sha256": "3ce879784507147267e656c81c5eea96979f4db462c3569a4d9cb9e5c22d1953",
+  "vendorSignatureVerified": true,
+  "version": "2.31226.1"
+}

@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-10-13T05:40:53.604Z",
+  "version": "0.1.0",
+  "tag": "v0.1.0",
+  "artifactDirectory": "release-artifacts/v0.1.0/candidate-20261013T053859889Z",
+  "signingKind": "ad-hoc",
+  "sourceSha256": "429c5dadc5125a6ff873b77134576caad6adfe76b19d0287eb82edbd7a5ca621",
+  "results": [
+    {
+      "architecture": "arm64",
+      "codeType": "ARM64",
+      "startupSurvivedSeconds": 8,
+      "execution": "native Apple Silicon"
+    },
+    {
+      "architecture": "x86_64",
+      "codeType": "X86-64 (translated)",
+      "startupSurvivedSeconds": 8,
+      "execution": "Rosetta on Apple Silicon"
+    }
+  ],
+  "status": "passed",
+  "releaseAcceptanceComplete": false,
+  "limitations": [
+    "Temporary HOME and Applications on the development Mac; not a clean macOS 15 system.",
+    "x86_64 on Apple Silicon uses Rosetta; not physical Intel hardware.",
+    "Launch survival does not verify packaged two-tool update/rollback interaction.",
+    "Candidate ad-hoc integrity is not Developer ID signing or Gatekeeper acceptance."
+  ],
+  "artifactHashesVerified": true,
+  "artifacts": [
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.app.zip",
+      "bytes": 10176342,
+      "sha256": "362ee1af06af2db2f59c1affe71ee6a1a8c634c141c197079c339c538da2eb2a"
+    },
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.dmg",
+      "bytes": 11143728,
+      "sha256": "47752565f373de38032bb023f1aa03280a6366fe8891b822e42350d8a340b2cd"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 10285,
+      "sha256": "0e85521a3831002b4d6bab06237b3bdcbaffa0b755e28555b28139fbd35a7787"
+    },
+    {
+      "name": "release-notes.md",
+      "bytes": 2734,
+      "sha256": "8485b5a59fffbcea457a05d173e72e9df07b851db1402815c8f401a278bf8e7e"
+    },
+    {
+      "name": "release-check-fixture.json",
+      "bytes": 555,
+      "sha256": "074f8fb36802babf01fb1b749ae5d0e159bc46313eb8351c80980fa23d2435bf"
+    }
+  ],
+  "zipExtractionVerified": true,
+  "dmgMountAndTemporaryInstallVerified": true,
+  "temporaryUninstallVerified": true
+}

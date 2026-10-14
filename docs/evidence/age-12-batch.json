@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-12T08:07:15.288Z",
+  "architecture": "arm64",
+  "isolation": "Temporary explicit prefixes and artificial configuration; no daily Agent modifications or model requests",
+  "phase": "batch",
+  "artifactSource": "Previously fetched official npm cache; source URL and SHA512 revalidated by the production updater",
+  "results": {
+    "codexSucceeded": true,
+    "geminiFinalVersion": "0.63.0",
+    "geminiPreparationFailedWithoutMutation": true,
+    "installingCancellationWaitedForVerifiedSuccess": true,
+    "mixedBatchPaused": true,
+    "successPreservedOnContinue": true
+  },
+  "status": "passed"
+}

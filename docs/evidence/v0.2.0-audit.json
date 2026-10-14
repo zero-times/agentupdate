@@ -1,0 +1,467 @@
+{
+  "version": "0.2.0",
+  "issue": "AGE-20",
+  "reportDate": "2026-10-14",
+  "status": "ready_for_local_review",
+  "artifactDirectory": "release-artifacts/v0.2.0/candidate-20261013T235835293Z",
+  "sourceSha256": "61082610143e9e2939fced35c6a0498fea886f141698aaea0912128b341090e2",
+  "artifacts": [
+    {
+      "name": "AgentUpdate-0.2.0-macos-universal.app.zip",
+      "bytes": 10442088,
+      "sha256": "f8b057f2ab8245bc7e884e0b29e4ec5387ed4c92e998d69d1d1397dadeda1569"
+    },
+    {
+      "name": "AgentUpdate-0.2.0-macos-universal.dmg",
+      "bytes": 11440093,
+      "sha256": "a726136d2696c2b0e10938afa002c875c50dba4ff814c6b805e6b5ca2c3cf9ee"
+    }
+  ],
+  "ordinaryRustTests": 57,
+  "nestedLockChildTests": 1,
+  "evidence": [
+    {
+      "path": "docs/evidence/v0.2.0-local-tools.json",
+      "sha256": "e5095a3d7e80929b0321fc96016f61f64211888128a63d6ddb77ee7ffc865c00",
+      "result": [
+        {
+          "agent": "codex",
+          "architecture": "arm64",
+          "configurationBackupReadable": true,
+          "configurationBytes": 15103,
+          "installed": "0.162.1",
+          "latest": "0.162.1",
+          "oldInstallationBytes": 338135792,
+          "source": "homebrew",
+          "supported": true
+        },
+        {
+          "agent": "claude",
+          "architecture": "arm64",
+          "configurationBackupReadable": true,
+          "configurationBytes": 126204,
+          "installed": "2.1.287",
+          "latest": "2.1.287",
+          "oldInstallationBytes": 227829106,
+          "source": "homebrew",
+          "supported": true
+        },
+        {
+          "agent": "deepseek",
+          "architecture": "arm64",
+          "configurationBackupReadable": true,
+          "configurationBytes": 40218,
+          "installed": "0.2.0-rc.2",
+          "latest": "0.2.0-rc.2",
+          "oldInstallationBytes": 444701646,
+          "source": "user_npm",
+          "supported": true
+        },
+        {
+          "desktop": "codex",
+          "latest": "26.623.141536",
+          "sha256": "d948dc36b8358f5a2924b033fbf08398eea7860dc9e97cb5ab9b354490283a0a",
+          "trustedPackage": true
+        },
+        {
+          "desktop": "claude",
+          "latest": "2.31226.1",
+          "sha256": "3ce879784507147267e656c81c5eea96979f4db462c3569a4d9cb9e5c22d1953",
+          "trustedPackage": true
+        }
+      ]
+    },
+    {
+      "path": "docs/evidence/v0.2.0-install-codex.json",
+      "sha256": "a45fe4ed1d518981bb520388d5d88640db355b3615116fc313946603dd8d5234",
+      "result": {
+        "agent": "codex",
+        "homeIsolated": true,
+        "installed": true,
+        "rollbackToAbsent": true,
+        "version": "0.162.1"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-install-claude.json",
+      "sha256": "099bd5d89e8307e094e0c525682db83b1811d2a06545208006ec6ded712bcc46",
+      "result": {
+        "agent": "claude",
+        "homeIsolated": true,
+        "installed": true,
+        "rollbackToAbsent": true,
+        "version": "2.1.296"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-install-deepseek.json",
+      "sha256": "0ece2a1a19b0c47013cb9860d6430898a9ce110eeb50df16d504c57945b72d1f",
+      "result": {
+        "agent": "deepseek",
+        "homeIsolated": true,
+        "installed": true,
+        "rollbackToAbsent": true,
+        "version": "0.2.0-rc.2"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-install-gemini.json",
+      "sha256": "3e357dc0c8e2716e614dd632e56326fdc085e120b319d1ba25ed8d31bfaac133",
+      "result": {
+        "agent": "gemini",
+        "homeIsolated": true,
+        "installed": true,
+        "rollbackToAbsent": true,
+        "version": "0.63.0"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-app-codex.json",
+      "sha256": "da5e0d9ac17cccbd5b60d2be101f2fb27339eebf929173c3bdbbce5f765d174e",
+      "result": {
+        "homeIsolated": true,
+        "installationVerified": true,
+        "officialDownloadVerified": true,
+        "product": "codex",
+        "rollbackToAbsent": true,
+        "sha256": "d948dc36b8358f5a2924b033fbf08398eea7860dc9e97cb5ab9b354490283a0a",
+        "vendorSignatureVerified": true,
+        "version": "26.623.141536"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-app-claude.json",
+      "sha256": "9c839680595855739fc5c9a08472631c11a9154e5a274d2a4193753d41c36a12",
+      "result": {
+        "homeIsolated": true,
+        "installationVerified": true,
+        "officialDownloadVerified": true,
+        "product": "claude",
+        "rollbackToAbsent": true,
+        "sha256": "3ce879784507147267e656c81c5eea96979f4db462c3569a4d9cb9e5c22d1953",
+        "vendorSignatureVerified": true,
+        "version": "2.31226.1"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-codex-cask-stage.json",
+      "sha256": "1f5ac078bdab22c8a6c2b529d3d1df34e37591d730b4798518c8bcceaf6e7dcc",
+      "result": {
+        "actualVersionAndHelpPassed": true,
+        "homebrewNotModified": true,
+        "officialCaskVersion": "0.162.1",
+        "verifiedArchiveStaged": true
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-helper-arm64.json",
+      "sha256": "8f0a2ece805d0313c88b0795305cc746c135664951a114a3f576529f2cbdfaae",
+      "result": {
+        "dailyApplicationChanged": false,
+        "headlessBundleReplacement": true,
+        "helperWaitedForParent": true,
+        "restartRequested": true,
+        "restoreHelperVerified": true
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-helper-x86_64.json",
+      "sha256": "8f0a2ece805d0313c88b0795305cc746c135664951a114a3f576529f2cbdfaae",
+      "result": {
+        "dailyApplicationChanged": false,
+        "headlessBundleReplacement": true,
+        "helperWaitedForParent": true,
+        "restartRequested": true,
+        "restoreHelperVerified": true
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-desktop.json",
+      "sha256": "dbdc069bc3a2621262e6d94e5fb62379f510f3cae3f3c48f4c9bf6a3c332cef2",
+      "result": {
+        "checkedAt": "2026-10-13T11:36:50.254Z",
+        "hostArchitecture": "arm64",
+        "results": [
+          {
+            "architecture": "aarch64",
+            "execution": "native",
+            "checks": {
+              "arbitraryCommandDenied": true,
+              "arbitraryFileDenied": true,
+              "desktopProductsChecked": true,
+              "desktopRendered": true,
+              "domainCall": true,
+              "filesystemPluginDenied": true,
+              "installCommandsReady": true,
+              "invalidAgentDenied": true,
+              "invalidDesktopProductDenied": true,
+              "invalidInstallAgentDenied": true,
+              "invalidInstallProductDenied": true,
+              "rendered": true,
+              "restrictedCommandDenied": true,
+              "shellPluginDenied": true
+            },
+            "overview": {
+              "agents": [
+                {
+                  "description": "支持 npm 与 Homebrew Cask 检测、升级和恢复。",
+                  "detectionState": "not_scanned",
+                  "id": "codex",
+                  "installationSource": "user_npm",
+                  "name": "Codex CLI",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "支持用户 npm、原生安装和 Homebrew Cask 最新稳定版升级。",
+                  "detectionState": "not_scanned",
+                  "id": "claude",
+                  "installationSource": "user_npm",
+                  "name": "Claude Code CLI",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "官方 dsh npm 渠道；预发行版本需显式选择。",
+                  "detectionState": "not_scanned",
+                  "id": "deepseek",
+                  "installationSource": "user_npm",
+                  "name": "Deepseek Harness",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "首批支持用户可写的 npm 安装；需要 macOS 15 或更高版本。",
+                  "detectionState": "not_scanned",
+                  "id": "gemini",
+                  "installationSource": "user_npm",
+                  "name": "Gemini CLI",
+                  "updateEnabled": false
+                }
+              ],
+              "appRelease": {
+                "source": "https://github.com/zero-times/agentupdate/releases",
+                "state": "not_checked"
+              },
+              "appVersion": "0.2.0",
+              "backup": {
+                "requiredBeforeUpdate": true,
+                "state": "available"
+              },
+              "platform": {
+                "architecture": "aarch64",
+                "minimumSystemVersion": "15.0",
+                "os": "macos"
+              },
+              "storage": {
+                "state": "available"
+              },
+              "updater": {
+                "state": "available"
+              },
+              "validationMode": true,
+              "validationWorkflow": false
+            }
+          },
+          {
+            "architecture": "x86_64",
+            "execution": "Rosetta",
+            "checks": {
+              "arbitraryCommandDenied": true,
+              "arbitraryFileDenied": true,
+              "desktopProductsChecked": true,
+              "desktopRendered": true,
+              "domainCall": true,
+              "filesystemPluginDenied": true,
+              "installCommandsReady": true,
+              "invalidAgentDenied": true,
+              "invalidDesktopProductDenied": true,
+              "invalidInstallAgentDenied": true,
+              "invalidInstallProductDenied": true,
+              "rendered": true,
+              "restrictedCommandDenied": true,
+              "shellPluginDenied": true
+            },
+            "overview": {
+              "agents": [
+                {
+                  "description": "支持 npm 与 Homebrew Cask 检测、升级和恢复。",
+                  "detectionState": "not_scanned",
+                  "id": "codex",
+                  "installationSource": "user_npm",
+                  "name": "Codex CLI",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "支持用户 npm、原生安装和 Homebrew Cask 最新稳定版升级。",
+                  "detectionState": "not_scanned",
+                  "id": "claude",
+                  "installationSource": "user_npm",
+                  "name": "Claude Code CLI",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "官方 dsh npm 渠道；预发行版本需显式选择。",
+                  "detectionState": "not_scanned",
+                  "id": "deepseek",
+                  "installationSource": "user_npm",
+                  "name": "Deepseek Harness",
+                  "updateEnabled": false
+                },
+                {
+                  "description": "首批支持用户可写的 npm 安装；需要 macOS 15 或更高版本。",
+                  "detectionState": "not_scanned",
+                  "id": "gemini",
+                  "installationSource": "user_npm",
+                  "name": "Gemini CLI",
+                  "updateEnabled": false
+                }
+              ],
+              "appRelease": {
+                "source": "https://github.com/zero-times/agentupdate/releases",
+                "state": "not_checked"
+              },
+              "appVersion": "0.2.0",
+              "backup": {
+                "requiredBeforeUpdate": true,
+                "state": "available"
+              },
+              "platform": {
+                "architecture": "x86_64",
+                "minimumSystemVersion": "15.0",
+                "os": "macos"
+              },
+              "storage": {
+                "state": "available"
+              },
+              "updater": {
+                "state": "available"
+              },
+              "validationMode": true,
+              "validationWorkflow": false
+            }
+          }
+        ],
+        "limitations": [
+          "x86_64 executes through Rosetta on Apple Silicon; physical Intel hardware remains untested.",
+          "Minimum macOS 15 is configured, not tested on macOS 15 hardware.",
+          "Ad-hoc signed development build; Developer ID and notarization belong to AGE-16.",
+          "This boundary check does not execute an Agent update or rollback; separate workflow checks cover those operations."
+        ],
+        "universalBundles": [
+          "AgentUpdate.app",
+          "AgentUpdate Validation.app"
+        ],
+        "adHocSignaturesVerified": true,
+        "status": "passed"
+      }
+    },
+    {
+      "path": "docs/evidence/v0.2.0-package.json",
+      "sha256": "f23571ee362dc11e87002e76c9924e4ee8a85a7c24cf910a8aa83af0d4ae9b70",
+      "result": {
+        "checkedAt": "2026-10-14T00:00:54.188Z",
+        "version": "0.2.0",
+        "tag": "v0.2.0",
+        "artifactDirectory": "release-artifacts/v0.2.0/candidate-20261013T235835293Z",
+        "signingKind": "ad-hoc",
+        "sourceSha256": "61082610143e9e2939fced35c6a0498fea886f141698aaea0912128b341090e2",
+        "results": [
+          {
+            "architecture": "arm64",
+            "codeType": "ARM64",
+            "startupSurvivedSeconds": 8,
+            "execution": "native Apple Silicon"
+          },
+          {
+            "architecture": "x86_64",
+            "codeType": "X86-64 (translated)",
+            "startupSurvivedSeconds": 8,
+            "execution": "Rosetta on Apple Silicon"
+          }
+        ],
+        "status": "passed",
+        "releaseAcceptanceComplete": false,
+        "limitations": [
+          "Temporary HOME and Applications on the development Mac; not a clean macOS 15 system.",
+          "x86_64 on Apple Silicon uses Rosetta; not physical Intel hardware.",
+          "Launch survival does not verify packaged two-tool update/rollback interaction.",
+          "Candidate ad-hoc integrity is not Developer ID signing or Gatekeeper acceptance."
+        ],
+        "artifactHashesVerified": true,
+        "artifacts": [
+          {
+            "name": "AgentUpdate-0.2.0-macos-universal.app.zip",
+            "bytes": 10442088,
+            "sha256": "f8b057f2ab8245bc7e884e0b29e4ec5387ed4c92e998d69d1d1397dadeda1569"
+          },
+          {
+            "name": "AgentUpdate-0.2.0-macos-universal.dmg",
+            "bytes": 11440093,
+            "sha256": "a726136d2696c2b0e10938afa002c875c50dba4ff814c6b805e6b5ca2c3cf9ee"
+          },
+          {
+            "name": "source-manifest.json",
+            "bytes": 10999,
+            "sha256": "e0c8936b579cc15b165f578857e42974bedd273d4c41a504830814aa06678d0c"
+          },
+          {
+            "name": "release-notes.md",
+            "bytes": 1427,
+            "sha256": "ffcb6cbf00a6d539cd4386d6316a74a2aacf0bf90b19e10268abbe558869af77"
+          },
+          {
+            "name": "release-check-fixture.json",
+            "bytes": 555,
+            "sha256": "60b8da62601f6966ee8affbab8e7cdb0a5f4270097c0da438b42cb98a9acc190"
+          }
+        ],
+        "zipExtractionVerified": true,
+        "dmgMountAndTemporaryInstallVerified": true,
+        "temporaryUninstallVerified": true
+      }
+    }
+  ],
+  "logEvidence": [
+    {
+      "path": ".validation/v020-tests.log",
+      "sha256": "4f41052ecefe21d2a0d6b5dbbc1cd76e38ae2a24098c729a9595e8bf2e132864"
+    },
+    {
+      "path": ".validation/v020-dsh-upgrade.log",
+      "sha256": "2be80c734c8d2c0640e2e1fd9cd7cf5a0aed754194f1a0b4a0a70a4c08e7b2a3"
+    },
+    {
+      "path": ".validation/v020-install-claude-final.log",
+      "sha256": "b080ffadabe8724cf8104e8bc53a0486a53293ac3f37d48e3354298bc0ec7e8f"
+    },
+    {
+      "path": ".validation/v020-helper-arm64-final.log",
+      "sha256": "80f3ade827cccb972656045b95827a89735ffd2a9fc221539b4d69a82efbdb1d"
+    },
+    {
+      "path": ".validation/v020-helper-x86_64.log",
+      "sha256": "672c7b13ea94ad1f7eacc95721d90da8dc2f6013e9d8970a047faa5b9f87f277"
+    },
+    {
+      "path": ".validation/v020-codex-cask-stage.log",
+      "sha256": "cc19bb88f86f1264420739709723e7dfbdb1223daa4a09633284e526bdeb0f5e"
+    }
+  ],
+  "dailyToolsModified": false,
+  "publicReleaseCreated": false,
+  "lockScreenBlocked": false,
+  "emailSent": false,
+  "limits": [
+    "Fixed catalog: Codex, Claude, Deepseek, Gemini CLI and Codex, Claude, ChatGPT apps. Unknown tools require adapters.",
+    "Initial npm installation requires existing Node.js >=22.12 and ~/.local/bin in terminal PATH.",
+    "Deepseek latest is RC and requires explicit prerelease opt-in.",
+    "Daily Homebrew installations were read and checked but were not upgraded as a test.",
+    "Self-update helper uses synthetic signed universal bundles; no public AgentUpdate release was installed.",
+    "x86_64 was tested through Rosetta, not physical Intel; clean macOS 15 not tested.",
+    "Local unsigned/ad-hoc package accepted; no Developer ID/notarization/public publication.",
+    "Email notification MCP unavailable; no actual screen-lock blockage occurred."
+  ],
+  "cloudPackage": {
+    "attachmentId": "a50e67f5-2a6b-474b-be25-6f58e45552d8",
+    "downloadedAndHashVerified": true,
+    "sha256": "a726136d2696c2b0e10938afa002c875c50dba4ff814c6b805e6b5ca2c3cf9ee"
+  }
+}

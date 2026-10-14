@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-13T05:48:05.424Z",
+  "version": "0.1.0",
+  "status": "ready-for-local-functional-review",
+  "deliveryPolicy": "unsigned-local-use-accepted-by-user",
+  "artifactDirectory": "release-artifacts/v0.1.0/candidate-20261013T053859889Z",
+  "sourceSha256": "429c5dadc5125a6ff873b77134576caad6adfe76b19d0287eb82edbd7a5ca621",
+  "sourceInputs": 72,
+  "sourceFilesMatch": true,
+  "artifacts": [
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.app.zip",
+      "bytes": 10176342,
+      "sha256": "362ee1af06af2db2f59c1affe71ee6a1a8c634c141c197079c339c538da2eb2a"
+    },
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.dmg",
+      "bytes": 11143728,
+      "sha256": "47752565f373de38032bb023f1aa03280a6366fe8891b822e42350d8a340b2cd"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 10285,
+      "sha256": "0e85521a3831002b4d6bab06237b3bdcbaffa0b755e28555b28139fbd35a7787"
+    },
+    {
+      "name": "release-notes.md",
+      "bytes": 2734,
+      "sha256": "8485b5a59fffbcea457a05d173e72e9df07b851db1402815c8f401a278bf8e7e"
+    },
+    {
+      "name": "release-check-fixture.json",
+      "bytes": 555,
+      "sha256": "074f8fb36802babf01fb1b749ae5d0e159bc46313eb8351c80980fa23d2435bf"
+    }
+  ],
+  "architecture": [
+    "arm64",
+    "x86_64"
+  ],
+  "signing": {
+    "kind": "ad-hoc",
+    "verified": true
+  },
+  "checks": {
+    "regularRustTests": {
+      "passed": 48,
+      "log": ".validation/expanded-rust-tests.log",
+      "logSha256": "0f26e90baed21e14774d88760432e3db5b6171e7a8194a940ff3b910cf056582",
+      "followup": "Two Claude regressions passed after cask target/artifact hardening"
+    },
+    "typeCheck": true,
+    "productionBuild": true,
+    "rustfmt": true,
+    "actualClaudeNativeRoundtrip": {
+      "architecture": "arm64",
+      "execution": "native Apple Silicon",
+      "installationTreeExact": true,
+      "isolation": "Temporary HOME; actual official binaries; no daily installation or credential changes",
+      "original": "2.1.286",
+      "originalMissingConfigDirectoryRestored": true,
+      "stage": "restored",
+      "status": "passed",
+      "target": "2.1.287"
+    },
+    "webViewBoundary": "passed",
+    "arm64UI": "passed",
+    "rosettaUI": "passed",
+    "productionPackage": "passed"
+  },
+  "localCLIs": {
+    "instances": [
+      {
+        "id": "codex-3932d232a9a851bed3413dc3dc9106384e2b1fc3e80d906cbd1accb2c52336db",
+        "agentId": "codex",
+        "commandPath": "/opt/homebrew/bin/codex",
+        "resolvedCommand": "/opt/homebrew/Caskroom/codex/0.162.1/bin/codex",
+        "packageRoot": null,
+        "prefix": null,
+        "nodePath": null,
+        "version": "0.162.1",
+        "architecture": "arm64",
+        "source": "homebrew",
+        "supported": false,
+        "versionVerified": true,
+        "reason": "Homebrew 安装仅显示版本；指定版本恢复尚未验证。"
+      },
+      {
+        "id": "claude-36bb70b82723c226a4615092447abc48c068837a439c90c9e0ab7f7fd4225fbd",
+        "agentId": "claude",
+        "commandPath": "/opt/homebrew/bin/claude",
+        "resolvedCommand": "/opt/homebrew/Caskroom/claude-code/2.1.287/claude",
+        "packageRoot": "/opt/homebrew/Caskroom/claude-code",
+        "prefix": "/opt/homebrew",
+        "nodePath": null,
+        "version": "2.1.287",
+        "architecture": "arm64",
+        "source": "homebrew",
+        "supported": true,
+        "versionVerified": true,
+        "reason": null
+      }
+    ],
+    "warnings": []
+  },
+  "desktopApplications": [
+    {
+      "product": "codex",
+      "name": "Codex app",
+      "installed": [],
+      "latestVersion": "26.623.141536",
+      "state": "not_installed",
+      "checkedAt": 1791869577851,
+      "metadataSource": "https://formulae.brew.sh/api/cask/codex-app.json",
+      "officialPage": "https://openai.com/codex/",
+      "downloadAvailable": true,
+      "errorCode": null,
+      "channelNote": "公开 Homebrew 目录中的稳定版本；厂商分批发布和账户渠道可能不同。"
+    },
+    {
+      "product": "claude",
+      "name": "Claude app",
+      "installed": [
+        {
+          "path": "/Applications/Claude.app",
+          "version": "2.31226.1",
+          "build": "2.31226.1",
+          "state": "up_to_date"
+        }
+      ],
+      "latestVersion": "2.31226.1",
+      "state": "up_to_date",
+      "checkedAt": 1791869577851,
+      "metadataSource": "https://downloads.claude.ai/releases/darwin/universal/RELEASES.json",
+      "officialPage": "https://claude.ai/download",
+      "downloadAvailable": true,
+      "errorCode": null,
+      "channelNote": "Claude 官方公开稳定更新渠道；账户或分批发布资格由官方应用决定。"
+    },
+    {
+      "product": "chatgpt",
+      "name": "ChatGPT / 集成 Codex",
+      "installed": [
+        {
+          "path": "/Applications/ChatGPT.app",
+          "version": "26.1007.30912",
+          "build": "20156",
+          "state": "up_to_date"
+        }
+      ],
+      "latestVersion": "26.1007.30912",
+      "state": "up_to_date",
+      "checkedAt": 1791869577851,
+      "metadataSource": "https://formulae.brew.sh/api/cask/chatgpt.json",
+      "officialPage": "https://chatgpt.com/download/",
+      "downloadAvailable": true,
+      "errorCode": null,
+      "channelNote": "公开 Homebrew 目录中的稳定版本；厂商分批发布和账户渠道可能不同。"
+    }
+  ],
+  "evidence": [
+    {
+      "file": "docs/evidence/age-6-live-cli.json",
+      "sha256": "9a9580b42f36c90b3ba37c76dc9bdebb10053b40f0701bb8bb624263dca0a3ba"
+    },
+    {
+      "file": "docs/evidence/age-18-real-native.json",
+      "sha256": "a61d851e3e5fea519b14f1e08a77c960ec947a4c4a4c7c399c42a75cd62ef068"
+    },
+    {
+      "file": "docs/evidence/age-19-live-desktop.json",
+      "sha256": "2dc0d1c0891fa0436a0313f619830652e328493601bbf7ab76557b8fcd1acb39"
+    },
+    {
+      "file": "docs/evidence/age-5-desktop.json",
+      "sha256": "fe7622b47babc17d4c4a74d8dc33021b1f8322160aad0e037311d925742b138b"
+    },
+    {
+      "file": "docs/evidence/age-15-ui-arm64.json",
+      "sha256": "ad683284d71f9be66cb29c1d686244a9ad7032caa7d548e5b8eebfa27252a27b"
+    },
+    {
+      "file": "docs/evidence/age-15-ui-x86_64.json",
+      "sha256": "0aac811f5e11a072839ed0c7b598a2e45c74638ac002fe82376029846b91ac47"
+    },
+    {
+      "file": "docs/evidence/v0.1.0-expanded-package.json",
+      "sha256": "b8b282bd5c1f99fa524d64208f94ae5a6b52157cae30a09bcdda4c46255b2896"
+    }
+  ],
+  "limitations": [
+    "Physical Intel and clean macOS 15 acceptance remain pending.",
+    "Actual Homebrew Claude upgrade was not executed against daily installations.",
+    "CLI roundtrips in a validation WebView and production packaged startup are distinct checks; full packaged CLI interaction remains pending.",
+    "Claude npm adapter uses shared npm update infrastructure; actual Claude roundtrip in this iteration used native arm64 binaries.",
+    "Current desktop sources are public stable channels, not account-specific or phased rollout eligibility.",
+    "Developer ID, notarization and clean committed-source public distribution remain pending; unsigned local use was accepted by the user."
+  ],
+  "dailyCLIInstallationsChanged": false,
+  "publicReleaseCreated": false,
+  "sourceCommitted": false,
+  "age16BindingPreserved": true
+}

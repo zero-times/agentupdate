@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-13T01:41:53.041Z",
+  "status": "passed",
+  "artifactDirectory": "release-artifacts/v0.1.0/candidate-20261013T012754075Z",
+  "artifacts": [
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.app.zip",
+      "bytes": 10025123,
+      "sha256": "a503824320b228df2f71dd41be40891139453864fae8fbe2489aae78ac71fec8",
+      "matches": true
+    },
+    {
+      "name": "AgentUpdate-0.1.0-macos-universal.dmg",
+      "bytes": 10972352,
+      "sha256": "07bc55e8554d2a09985d7108377fc484607a07898be8418844e803b7c7f259e6",
+      "matches": true
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 9268,
+      "sha256": "ee3e50f7ce56389f44d0594167438ef15f3822e8e7eb854958d92bef8d09a4a1",
+      "matches": true
+    },
+    {
+      "name": "release-notes.md",
+      "bytes": 2203,
+      "sha256": "2f20ebd48c493788aa906fffe854b22908bdf4ba73d3d6b7ce905d73034c2803",
+      "matches": true
+    },
+    {
+      "name": "release-check-fixture.json",
+      "bytes": 555,
+      "sha256": "157ca894ccd31da27b308376bc858e4cfffe1457a67e19e60b24ccba92824163",
+      "matches": true
+    }
+  ],
+  "source": {
+    "fileCount": 65,
+    "mismatches": [],
+    "sha256": "0bab938e6fc43809d55d44f2bf92d6fcbf9c34faab07e6cf24e5216dee8b2e35",
+    "aggregateVerified": true
+  },
+  "productionBinaryMatchesPreviousAudit": true,
+  "zipIntegrity": "passed: unzip -tq",
+  "dmgIntegrity": "passed: hdiutil verify",
+  "manifestSnapshotMatches": true,
+  "cloud": {
+    "parent": {
+      "identifier": "AGE-2",
+      "status": "blocked",
+      "version": 5
+    },
+    "children": [
+      {
+        "identifier": "AGE-15",
+        "status": "in_progress",
+        "version": 7
+      },
+      {
+        "identifier": "AGE-17",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-14",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-13",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-12",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-11",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-10",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-9",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-8",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-7",
+        "status": "in_progress",
+        "version": 4
+      },
+      {
+        "identifier": "AGE-5",
+        "status": "in_progress",
+        "version": 6
+      },
+      {
+        "identifier": "AGE-4",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-3",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-6",
+        "status": "in_progress",
+        "version": 5
+      },
+      {
+        "identifier": "AGE-16",
+        "status": "blocked",
+        "version": 9
+      }
+    ],
+    "age16AttachmentCursor": "3012",
+    "age16CommentCursor": "3013"
+  },
+  "limitations": [
+    "Archive integrity and source consistency rechecked; earlier integration tests were reused, not rerun.",
+    "Ad-hoc candidate does not complete Developer ID, notarization, clean macOS 15 or physical Intel acceptance."
+  ]
+}

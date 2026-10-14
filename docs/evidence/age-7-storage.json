@@ -1,0 +1,12 @@
+{
+  "issue": "AGE-7",
+  "checkedAt": "2026-10-12T06:09:38.922534+00:00",
+  "storage": "SQLite WAL FULL, schema 1",
+  "tests": {
+    "storage": 4,
+    "existing": 6,
+    "webTypes": "passed"
+  },
+  "scope": "temporary roots only",
+  "status": "self_verified_pending_overall_review"
+}

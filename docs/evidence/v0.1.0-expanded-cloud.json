@@ -1,0 +1,94 @@
+{
+  "checkedAt": "2026-10-13T05:55:59.554Z",
+  "board": "https://board.x5brain.workers.dev",
+  "tasks": [
+    {
+      "identifier": "AGE-3",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-4",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-5",
+      "status": "in_review",
+      "version": 7
+    },
+    {
+      "identifier": "AGE-6",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-7",
+      "status": "in_review",
+      "version": 5
+    },
+    {
+      "identifier": "AGE-8",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-9",
+      "status": "in_review",
+      "version": 5
+    },
+    {
+      "identifier": "AGE-10",
+      "status": "in_review",
+      "version": 5
+    },
+    {
+      "identifier": "AGE-11",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-12",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-13",
+      "status": "in_review",
+      "version": 5
+    },
+    {
+      "identifier": "AGE-14",
+      "status": "in_review",
+      "version": 6
+    },
+    {
+      "identifier": "AGE-15",
+      "status": "in_review",
+      "version": 8
+    },
+    {
+      "identifier": "AGE-17",
+      "status": "in_review",
+      "version": 5
+    },
+    {
+      "identifier": "AGE-18",
+      "status": "in_review",
+      "version": 4
+    },
+    {
+      "identifier": "AGE-19",
+      "status": "in_review",
+      "version": 4
+    },
+    {
+      "identifier": "AGE-2",
+      "status": "in_review",
+      "version": 8
+    }
+  ],
+  "age16BindingUntouched": true,
+  "candidateAttachmentId": "6c8ae2fe-b22c-4745-b268-4e0615aaceff",
+  "downloadedCandidateSha256": "47752565f373de38032bb023f1aa03280a6366fe8891b822e42350d8a340b2cd"
+}

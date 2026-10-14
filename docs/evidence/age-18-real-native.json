@@ -1,0 +1,11 @@
+{
+  "architecture": "arm64",
+  "execution": "native Apple Silicon",
+  "installationTreeExact": true,
+  "isolation": "Temporary HOME; actual official binaries; no daily installation or credential changes",
+  "original": "2.1.286",
+  "originalMissingConfigDirectoryRestored": true,
+  "stage": "restored",
+  "status": "passed",
+  "target": "2.1.287"
+}

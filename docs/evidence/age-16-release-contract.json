@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-10-13T01:32:20Z",
+  "artifactDirectory": "release-artifacts/v0.1.0/candidate-20261013T012754075Z",
+  "version": "0.1.0",
+  "tag": "v0.1.0",
+  "checks": [
+    {
+      "command": ".validation/cargo-run test --manifest-path src-tauri/Cargo.toml --release --locked --offline --test app_releases",
+      "exitCode": 0,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 2,
+      "ignoredReasons": ["Live fixed GitHub endpoint", "Requires generated package fixture"]
+    },
+    {
+      "command": "AGENTUPDATE_RELEASE_FIXTURE=<artifactDirectory>/release-check-fixture.json .validation/cargo-run test --manifest-path src-tauri/Cargo.toml --release --locked --offline --test app_releases packaged_release_fixture -- --ignored",
+      "exitCode": 0,
+      "passed": 1,
+      "failed": 0,
+      "assertions": [
+        "Tag and parsed release version equal compiled Cargo version",
+        "aarch64 and x86_64 select the exact universal DMG asset",
+        "Download URL matches zero-times/agentupdate and v0.1.0",
+        "0.0.0 reports update_available; 0.1.0 reports up_to_date"
+      ]
+    },
+    {
+      "command": "npm run build:web && (cd <artifactDirectory> && shasum -a 256 -c SHA256SUMS)",
+      "exitCode": 0,
+      "typeCheck": "passed",
+      "productionBuild": "passed",
+      "artifactsPreservedAfterViteRebuild": true,
+      "verified": [
+        "AgentUpdate-0.1.0-macos-universal.app.zip",
+        "AgentUpdate-0.1.0-macos-universal.dmg",
+        "source-manifest.json",
+        "release-notes.md",
+        "release-check-fixture.json"
+      ]
+    },
+    {
+      "command": ".validation/cargo-run fmt --manifest-path src-tauri/Cargo.toml -- --check",
+      "exitCode": 0
+    },
+    {
+      "command": "node --check scripts/package-macos.mjs && node --check scripts/validate-macos-package.mjs",
+      "exitCode": 0
+    }
+  ],
+  "fixtureIsSynthetic": true,
+  "actualGitHubReleaseCreated": false,
+  "signedPathTested": false,
+  "releaseAcceptanceComplete": false
+}

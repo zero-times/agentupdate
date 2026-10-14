@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-10-13T05:38:58.725Z",
+  "architecture": "x86_64",
+  "execution": "Rosetta on Apple Silicon",
+  "catalogSource": "Pinned previously fetched official npm metadata and artifacts, revalidated by production code",
+  "isolation": "Temporary HOME, explicit npm prefixes, artificial configuration; no daily Agent changes",
+  "result": {
+    "architecture": "x86_64",
+    "checks": {
+      "backupProtected": true,
+      "bothRestored": true,
+      "bothUpdated": true,
+      "planConfirmed": true,
+      "privateLogExported": true,
+      "releasePrompt": true,
+      "rendered": true,
+      "selectedBoth": true
+    },
+    "transactions": [
+      {
+        "agent": "codex",
+        "original": "0.162.0",
+        "restorePoint": true,
+        "stage": "restored",
+        "target": "0.162.1"
+      },
+      {
+        "agent": "gemini",
+        "original": "0.62.0",
+        "restorePoint": true,
+        "stage": "restored",
+        "target": "0.63.0"
+      }
+    ]
+  },
+  "originalPackageTreesExact": true,
+  "status": "passed"
+}

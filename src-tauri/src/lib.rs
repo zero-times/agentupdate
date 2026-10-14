@@ -1,0 +1,710 @@
+pub mod agents;
+pub mod artifacts;
+pub mod backup;
+pub mod cli_install;
+pub mod deploy;
+pub mod desktop_apps;
+pub mod error;
+pub mod platform;
+pub mod releases;
+pub mod service;
+pub mod storage;
+pub mod updater;
+
+#[tauri::command]
+async fn install_cli(
+    app: tauri::AppHandle,
+    agent: agents::AgentId,
+    allow_prerelease: bool,
+) -> Result<cli_install::Summary, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _op = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前安装或恢复结束。"))?;
+        let root = service::with_store(&state, |s| Ok(s.root.clone()))?;
+        Ok(cli_install::install(
+            &root,
+            &agents::discovery::DiscoveryContext::current()?,
+            agent,
+            allow_prerelease,
+        )?
+        .into())
+    })
+    .await
+    .map_err(|_| error::AppError::new("INSTALL_FAILED", "安装未完成，请查看持久记录。"))?
+}
+#[tauri::command]
+async fn cli_install_history(
+    app: tauri::AppHandle,
+) -> Result<Vec<cli_install::Summary>, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = service::with_store(&app.state::<service::AppState>(), |s| Ok(s.root.clone()))?;
+        Ok(cli_install::history(&root)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    })
+    .await
+    .map_err(|_| error::AppError::new("INSTALL_RECORD", "安装记录读取失败。"))?
+}
+#[tauri::command]
+async fn rollback_cli_install(
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<cli_install::Summary, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _op = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束。"))?;
+        let root = service::with_store(&state, |s| Ok(s.root.clone()))?;
+        Ok(cli_install::rollback(
+            &root,
+            &agents::discovery::DiscoveryContext::current()?.home,
+            &id,
+        )?
+        .into())
+    })
+    .await
+    .map_err(|_| error::AppError::new("INSTALL_RECOVERY", "恢复安装未完成。"))?
+}
+#[tauri::command]
+async fn prepare_app_install(
+    app: tauri::AppHandle,
+    product: deploy::BundleProduct,
+) -> Result<deploy::Summary, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _op = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束。"))?;
+        let root = service::with_store(&state, |s| Ok(s.root.clone()))?;
+        let _lock = platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
+        let home = agents::discovery::DiscoveryContext::current()?.home;
+        let package = if let Some(p) = product.desktop() {
+            desktop_apps::package(p, std::env::consts::ARCH)?
+        } else {
+            releases::install_package(&root, env!("CARGO_PKG_VERSION"), std::env::consts::ARCH)?
+        };
+        Ok(deploy::prepare(&root, &home, product, &package, std::env::consts::ARCH)?.into())
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_PREPARE", "应用安装准备未完成，旧应用保留。"))?
+}
+#[tauri::command]
+async fn app_install_history(
+    app: tauri::AppHandle,
+) -> Result<Vec<deploy::Summary>, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = service::with_store(&app.state::<service::AppState>(), |s| Ok(s.root.clone()))?;
+        Ok(deploy::history(&root)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_RECORD", "应用安装记录读取失败。"))?
+}
+#[tauri::command]
+async fn finish_app_install(
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<deploy::Summary, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _op = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束。"))?;
+        let root = service::with_store(&state, |s| Ok(s.root.clone()))?;
+        let home = agents::discovery::DiscoveryContext::current()?.home;
+        let record = deploy::history(&root)?
+            .into_iter()
+            .find(|r| r.id == id)
+            .ok_or_else(|| error::AppError::new("APP_INSTALL_ID", "安装记录不存在。"))?;
+        if record.product == deploy::BundleProduct::Agentupdate {
+            let _lock =
+                platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
+            deploy::validate_destination(&home, record.product, &record.destination)?;
+            if deploy::destination(&home, record.product)? != record.destination {
+                return Err(error::AppError::new(
+                    "APP_SELF_PATH",
+                    "当前运行应用与更新目标不同。",
+                ));
+            }
+            deploy::launch_helper(&root, &id, false)?;
+            state
+                .restarting
+                .store(true, std::sync::atomic::Ordering::SeqCst);
+            let handle = app.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_secs(1));
+                handle.exit(0);
+                std::thread::sleep(std::time::Duration::from_secs(8));
+                std::process::exit(0);
+            });
+            let mut summary: deploy::Summary = record.into();
+            summary.state = "restarting".into();
+            Ok(summary)
+        } else {
+            Ok(deploy::install(&root, &home, &id, std::env::consts::ARCH)?.into())
+        }
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_INSTALL", "应用安装未完成，请查看持久记录。"))?
+}
+#[tauri::command]
+async fn rollback_app_install(
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<deploy::Summary, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _op = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束。"))?;
+        let root = service::with_store(&state, |s| Ok(s.root.clone()))?;
+        let home = agents::discovery::DiscoveryContext::current()?.home;
+        let record = deploy::history(&root)?
+            .into_iter()
+            .find(|r| r.id == id)
+            .ok_or_else(|| error::AppError::new("APP_INSTALL_ID", "安装记录不存在。"))?;
+        if record.product == deploy::BundleProduct::Agentupdate {
+            let _lock =
+                platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
+            if deploy::destination(&home, record.product)? != record.destination {
+                return Err(error::AppError::new(
+                    "APP_SELF_PATH",
+                    "当前应用与恢复目标不同。",
+                ));
+            }
+            deploy::launch_helper(&root, &id, true)?;
+            state
+                .restarting
+                .store(true, std::sync::atomic::Ordering::SeqCst);
+            let handle = app.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_secs(1));
+                handle.exit(0);
+                std::thread::sleep(std::time::Duration::from_secs(8));
+                std::process::exit(0);
+            });
+            let mut summary: deploy::Summary = record.into();
+            summary.state = "restarting".into();
+            Ok(summary)
+        } else {
+            Ok(deploy::rollback(&root, &home, &id)?.into())
+        }
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_RECOVERY", "应用恢复未完成，材料已保留。"))?
+}
+#[tauri::command]
+async fn check_desktop_apps() -> Result<Vec<desktop_apps::AppCheck>, error::AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let home = std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .ok_or_else(|| error::AppError::new("HOME_UNAVAILABLE", "无法确认用户目录。"))?;
+        Ok(desktop_apps::check(&home, std::env::consts::ARCH))
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_CHECK_FAILED", "桌面应用检查未完成。"))?
+}
+#[tauri::command]
+async fn open_desktop_app_channel(
+    product: desktop_apps::Product,
+    download: bool,
+) -> Result<(), error::AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        desktop_apps::open(product, download, std::env::consts::ARCH)
+    })
+    .await
+    .map_err(|_| error::AppError::new("APP_OPEN_FAILED", "无法打开官方更新入口。"))?
+}
+
+#[tauri::command]
+async fn check_app_release(
+    app: tauri::AppHandle,
+    manual: bool,
+) -> Result<releases::CheckResult, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = service::with_store(&app.state::<service::AppState>(), |store| {
+            Ok(store.root.clone())
+        })?;
+        releases::check(
+            &root,
+            manual,
+            env!("CARGO_PKG_VERSION"),
+            std::env::consts::ARCH,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("RELEASE_CHECK_FAILED", "应用版本检查未完成。"))?
+}
+#[tauri::command]
+async fn open_app_release(app: tauri::AppHandle, asset: bool) -> Result<(), error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = service::with_store(&app.state::<service::AppState>(), |store| {
+            Ok(store.root.clone())
+        })?;
+        releases::open_link(
+            &root,
+            asset,
+            env!("CARGO_PKG_VERSION"),
+            std::env::consts::ARCH,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("RELEASE_OPEN", "无法打开发布入口。"))?
+}
+
+#[tauri::command]
+async fn get_restore_details(
+    app: tauri::AppHandle,
+    transaction_id: String,
+) -> Result<storage::history::RestoreDetails, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::with_store(&app.state::<service::AppState>(), |store| {
+            storage::history::details(store, &transaction_id)
+        })
+    })
+    .await
+    .map_err(|_| error::AppError::new("HISTORY_FAILED", "恢复点详情读取失败。"))?
+}
+#[tauri::command]
+async fn export_transaction(
+    app: tauri::AppHandle,
+    transaction_id: String,
+    kind: storage::history::ExportKind,
+    confirmed_sensitive: bool,
+) -> Result<storage::history::ExportResult, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _operation = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束后导出。"))?;
+        let root = service::with_store(&state, |store| Ok(store.root.clone()))?;
+        storage::history::export(
+            &storage::Store::open(&root)?,
+            &transaction_id,
+            kind,
+            confirmed_sensitive,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("EXPORT_FAILED", "导出未完成。"))?
+}
+#[tauri::command]
+async fn cleanup_restore(
+    app: tauri::AppHandle,
+    transaction_id: String,
+) -> Result<(), error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _operation = state
+            .operation
+            .try_lock()
+            .map_err(|_| error::AppError::new("OPERATION_BUSY", "请等待当前操作结束后清理。"))?;
+        service::with_store(&state, |store| {
+            storage::history::cleanup(store, &transaction_id)
+        })
+    })
+    .await
+    .map_err(|_| error::AppError::new("CLEANUP_FAILED", "清理未完成，请保留恢复材料。"))?
+}
+#[tauri::command]
+async fn reveal_export(app: tauri::AppHandle, export_id: String) -> Result<(), error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::with_store(&app.state::<service::AppState>(), |store| {
+            storage::history::reveal_export(store, &export_id)
+        })
+    })
+    .await
+    .map_err(|_| error::AppError::new("EXPORT_OPEN", "导出目录无法打开。"))?
+}
+
+#[tauri::command]
+async fn inspect_interrupted_tasks(
+    app: tauri::AppHandle,
+) -> Result<updater::recovery::RecoveryReport, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<service::AppState>();
+        let _operation = match state.operation.try_lock() {
+            Ok(lock) => lock,
+            Err(_) => {
+                return Ok(updater::recovery::RecoveryReport {
+                    busy: true,
+                    items: vec![],
+                })
+            }
+        };
+        let home = std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .ok_or_else(|| error::AppError::new("HOME_UNAVAILABLE", "无法确认用户目录。"))?;
+        service::with_store(&state, |store| updater::recovery::reconcile(store, &home))
+    })
+    .await
+    .map_err(|_| {
+        error::AppError::new(
+            "RECOVERY_CHECK_FAILED",
+            "未完成任务检查失败，请保留恢复材料。",
+        )
+    })?
+}
+
+#[tauri::command]
+async fn execute_plan(
+    app: tauri::AppHandle,
+    plan_id: String,
+    continue_after_failure: bool,
+) -> Result<storage::model::UpdatePlan, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::execute_plan(
+            &app.state::<service::AppState>(),
+            &plan_id,
+            continue_after_failure,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("QUEUE_INTERRUPTED", "批量任务未完成，请查看持久化记录。"))?
+}
+#[tauri::command]
+async fn cancel_plan(
+    app: tauri::AppHandle,
+    plan_id: String,
+) -> Result<storage::model::UpdatePlan, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::with_store(&app.state::<service::AppState>(), |store| {
+            store.request_cancel(&plan_id)
+        })
+    })
+    .await
+    .map_err(|_| error::AppError::new("CANCEL_FAILED", "取消请求未确认，请查看任务记录。"))?
+}
+
+#[tauri::command]
+async fn preview_rollback(
+    app: tauri::AppHandle,
+    transaction_id: String,
+) -> Result<updater::rollback::RollbackPreview, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        let home = std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .ok_or_else(|| error::AppError::new("HOME_UNAVAILABLE", "无法确认用户配置目录。"))?;
+        service::with_store(&app.state::<service::AppState>(), |store| {
+            updater::rollback::preview(store, &transaction_id, &home)
+        })
+    })
+    .await
+    .map_err(|_| error::AppError::new("ROLLBACK_CHECK_FAILED", "恢复检查未完成。"))?
+}
+
+#[tauri::command]
+async fn rollback_update(
+    app: tauri::AppHandle,
+    transaction_id: String,
+    confirm_changed_config: bool,
+) -> Result<storage::model::UpdateTransaction, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::rollback(
+            &app.state::<service::AppState>(),
+            &transaction_id,
+            confirm_changed_config,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("ROLLBACK_INTERRUPTED", "恢复工作未完成，请查看事务记录。"))?
+}
+
+#[tauri::command]
+async fn execute_update(
+    app: tauri::AppHandle,
+    transaction_id: String,
+) -> Result<storage::model::UpdateTransaction, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::execute(&app.state::<service::AppState>(), &transaction_id)
+    })
+    .await
+    .map_err(|_| error::AppError::new("UPDATE_INTERRUPTED", "更新工作未完成，请查看事务记录。"))?
+}
+
+#[tauri::command]
+async fn create_update_plan(
+    app: tauri::AppHandle,
+    requests: Vec<service::PlanRequest>,
+) -> Result<storage::model::UpdatePlan, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::build_plan(&app.state::<service::AppState>(), requests)
+    })
+    .await
+    .map_err(|_| error::AppError::new("PLAN_FAILED", "更新计划未完成。"))?
+}
+
+#[tauri::command]
+async fn get_plan_history(
+    app: tauri::AppHandle,
+) -> Result<Vec<storage::model::UpdatePlan>, error::AppError> {
+    use tauri::Manager;
+    tauri::async_runtime::spawn_blocking(move || {
+        service::with_store(&app.state::<service::AppState>(), |store| store.plans())
+    })
+    .await
+    .map_err(|_| error::AppError::new("HISTORY_FAILED", "历史记录暂不可用。"))?
+}
+
+#[tauri::command]
+fn get_app_overview() -> Result<service::AppOverview, error::AppError> {
+    service::overview()
+}
+
+#[tauri::command]
+fn get_agent_support(agent_id: agents::AgentId) -> agents::AgentSupport {
+    agents::support(agent_id)
+}
+
+#[tauri::command]
+async fn discover_agents(
+    extra_paths: Vec<std::path::PathBuf>,
+    state: tauri::State<'_, service::AppState>,
+) -> Result<agents::discovery::DiscoveryReport, error::AppError> {
+    let report = tauri::async_runtime::spawn_blocking(move || {
+        agents::discovery::discover(
+            &agents::discovery::DiscoveryContext::current()?,
+            &extra_paths,
+        )
+    })
+    .await
+    .map_err(|_| error::AppError::new("DISCOVERY_FAILED", "工具扫描未完成。"))??;
+    *state
+        .installations
+        .lock()
+        .map_err(|_| error::AppError::new("STATE_UNAVAILABLE", "本地状态暂不可用。"))? =
+        report.instances.clone();
+    Ok(report)
+}
+
+#[tauri::command]
+async fn list_agent_versions(
+    agent_id: agents::AgentId,
+    include_prerelease: bool,
+    instance_id: Option<String>,
+    state: tauri::State<'_, service::AppState>,
+) -> Result<agents::versions::VersionCatalog, error::AppError> {
+    let instance = if let Some(id) = instance_id {
+        Some(
+            state
+                .installations
+                .lock()
+                .map_err(|_| error::AppError::new("STATE_UNAVAILABLE", "实例信息暂不可用。"))?
+                .iter()
+                .find(|i| i.id == id && i.agent_id == agent_id)
+                .cloned()
+                .ok_or_else(|| {
+                    error::AppError::new("INSTANCE_UNAVAILABLE", "请重新扫描安装实例。")
+                })?,
+        )
+    } else {
+        None
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        if let Some(i) = instance.filter(updater::native::handles) {
+            updater::native::catalog(&i)
+        } else {
+            agents::versions::fetch(agent_id, include_prerelease)
+        }
+    })
+    .await
+    .map_err(|_| error::AppError::new("VERSION_QUERY_FAILED", "版本查询未完成。"))?
+}
+
+#[tauri::command]
+async fn select_agent_version(
+    agent_id: agents::AgentId,
+    target: String,
+    allow_prerelease: bool,
+) -> Result<agents::versions::AvailableVersion, error::AppError> {
+    if target.len() > 128 {
+        return Err(error::AppError::new("INVALID_VERSION", "版本标识过长。"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let catalog = agents::versions::fetch(agent_id, allow_prerelease)?;
+        agents::versions::select(&catalog, &target, allow_prerelease)
+    })
+    .await
+    .map_err(|_| error::AppError::new("VERSION_QUERY_FAILED", "目标版本核验未完成。"))?
+}
+
+#[cfg(feature = "desktop-validation")]
+mod validation {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    pub struct Checks {
+        pub domain_call: bool,
+        pub invalid_agent_denied: bool,
+        pub restricted_command_denied: bool,
+        pub arbitrary_command_denied: bool,
+        pub arbitrary_file_denied: bool,
+        pub shell_plugin_denied: bool,
+        pub filesystem_plugin_denied: bool,
+        pub desktop_products_checked: bool,
+        pub invalid_desktop_product_denied: bool,
+        pub desktop_rendered: bool,
+        pub rendered: bool,
+        pub install_commands_ready: bool,
+        pub invalid_install_agent_denied: bool,
+        pub invalid_install_product_denied: bool,
+    }
+    #[derive(Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    pub struct WorkflowChecks {
+        pub rendered: bool,
+        pub selected_both: bool,
+        pub plan_confirmed: bool,
+        pub both_updated: bool,
+        pub both_restored: bool,
+        pub private_log_exported: bool,
+        pub backup_protected: bool,
+        pub release_prompt: bool,
+    }
+    #[tauri::command]
+    pub fn finish_workflow_validation(
+        app: tauri::AppHandle,
+        checks: WorkflowChecks,
+    ) -> Result<(), String> {
+        use tauri::Manager;
+        let destination = std::env::var_os("AGENTUPDATE_VALIDATION_RESULT")
+            .ok_or("Missing validation destination")?;
+        let plans = super::service::with_store(&app.state::<super::service::AppState>(), |store| {
+            store.plans()
+        })
+        .map_err(|e| e.message)?;
+        let transactions:Vec<_>=plans.into_iter().flat_map(|p|p.transactions).map(|tx|serde_json::json!({"agent":tx.installation.agent_id,"original":tx.installation.version,"target":tx.target.version,"stage":tx.stage,"restorePoint":tx.restore_point_id.is_some()})).collect();
+        let value = serde_json::json!({"architecture":std::env::consts::ARCH,"checks":checks,"transactions":transactions});
+        std::fs::write(
+            destination,
+            serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())?;
+        app.exit(0);
+        Ok(())
+    }
+    #[tauri::command]
+    pub fn restricted_probe() -> bool {
+        true
+    }
+
+    #[tauri::command]
+    pub fn finish_desktop_validation(app: tauri::AppHandle, checks: Checks) -> Result<(), String> {
+        // Developer-only binary and capability. Destination is set by the runner, never by IPC.
+        let destination = std::env::var_os("AGENTUPDATE_VALIDATION_RESULT")
+            .ok_or("Missing validation destination")?;
+        let value = serde_json::json!({ "overview": super::service::overview().map_err(|e| e.message)?, "checks": checks });
+        std::fs::write(
+            destination,
+            serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())?;
+        app.exit(0);
+        Ok(())
+    }
+}
+
+pub fn run() {
+    let builder = tauri::Builder::default().manage(service::AppState::default());
+    #[cfg(not(feature = "desktop-validation"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        get_app_overview,
+        check_app_release,
+        check_desktop_apps,
+        install_cli,
+        cli_install_history,
+        rollback_cli_install,
+        prepare_app_install,
+        app_install_history,
+        finish_app_install,
+        rollback_app_install,
+        open_desktop_app_channel,
+        open_app_release,
+        get_agent_support,
+        discover_agents,
+        list_agent_versions,
+        select_agent_version,
+        create_update_plan,
+        get_plan_history,
+        get_restore_details,
+        export_transaction,
+        cleanup_restore,
+        reveal_export,
+        inspect_interrupted_tasks,
+        execute_update,
+        execute_plan,
+        cancel_plan,
+        preview_rollback,
+        rollback_update
+    ]);
+    #[cfg(feature = "desktop-validation")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        get_app_overview,
+        check_app_release,
+        check_desktop_apps,
+        install_cli,
+        cli_install_history,
+        rollback_cli_install,
+        prepare_app_install,
+        app_install_history,
+        finish_app_install,
+        rollback_app_install,
+        open_desktop_app_channel,
+        open_app_release,
+        get_agent_support,
+        discover_agents,
+        list_agent_versions,
+        select_agent_version,
+        create_update_plan,
+        get_plan_history,
+        get_restore_details,
+        export_transaction,
+        cleanup_restore,
+        reveal_export,
+        inspect_interrupted_tasks,
+        execute_update,
+        execute_plan,
+        cancel_plan,
+        preview_rollback,
+        rollback_update,
+        validation::restricted_probe,
+        validation::finish_desktop_validation,
+        validation::finish_workflow_validation
+    ]);
+    builder
+        .run(tauri::generate_context!())
+        .expect("Could not run AgentUpdate");
+}

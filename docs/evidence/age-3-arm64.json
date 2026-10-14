@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-12",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "node": "v26.8.2",
+  "sandbox": "deny network and real user Agent configuration access during probes",
+  "configuration": "synthetic fixtures only; no login or inference",
+  "results": [
+    {
+      "tool": "codex",
+      "package": "@openai/codex",
+      "from": "0.162.0",
+      "to": "0.162.1",
+      "before": "codex-cli 0.162.0",
+      "upgraded": "codex-cli 0.162.1",
+      "restored": "codex-cli 0.162.0",
+      "source": "https://registry.npmjs.org/@openai/codex/-/codex-0.162.0.tgz",
+      "packageIntegrity": "sha512-qWWckMfknyVym1lD5y2rTwPJA2sgHkzePF2l/Uevss4hVpqbt23rMIHKNTrqECdnv82denylHWEzrAmDnCYNIw==",
+      "installSnapshotEntries": 69,
+      "configurationSnapshot": [
+        {
+          "path": ".codex",
+          "type": "directory",
+          "mode": 448
+        },
+        {
+          "path": ".codex/config.toml",
+          "type": "file",
+          "mode": 384,
+          "sha256": "76cd37dd06ceb3ee2d5d010bb74159dac194b1b75beb26e26d9f38d06c8766b5"
+        }
+      ],
+      "checks": {
+        "version": true,
+        "help": true,
+        "offlineRestore": true,
+        "restoredInstallHashes": true,
+        "restoredConfigurationBytesAndModes": true,
+        "restoredMissingManagedFile": true
+      },
+      "durationSeconds": 63
+    },
+    {
+      "tool": "gemini",
+      "package": "@google/gemini-cli",
+      "from": "0.62.0",
+      "to": "0.63.0",
+      "before": "0.62.0",
+      "upgraded": "0.63.0",
+      "restored": "0.62.0",
+      "source": "https://registry.npmjs.org/@google/gemini-cli/-/gemini-cli-0.62.0.tgz",
+      "packageIntegrity": "sha512-A1rw0Tf2sHLpGncfYdaq5WaJIufKAP8il4BmHD5Yw4ewmB/Wo0vRQb2bEvx7OqyaPFPZCh0hVhcMKsICZyIBww==",
+      "installSnapshotEntries": 923,
+      "configurationSnapshot": [
+        {
+          "path": ".gemini",
+          "type": "directory",
+          "mode": 448
+        },
+        {
+          "path": ".gemini/settings.json",
+          "type": "file",
+          "mode": 384,
+          "sha256": "b026b82a3827132892b62706d26889a5cdb74661cd0baa2652acf958eeaade80"
+        }
+      ],
+      "checks": {
+        "version": true,
+        "help": true,
+        "offlineRestore": true,
+        "restoredInstallHashes": true,
+        "restoredConfigurationBytesAndModes": true,
+        "restoredMissingManagedFile": true
+      },
+      "durationSeconds": 32
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-12T07:52:27.375Z",
+  "architecture": "arm64",
+  "isolation": "Temporary explicit prefixes and artificial configuration; no daily Agent modifications or model requests",
+  "phase": "roundtrip",
+  "artifactSource": "Previously fetched official npm cache; source URL and SHA512 revalidated by the production updater",
+  "results": [
+    {
+      "agent": "codex",
+      "original": "0.162.0",
+      "rejectedPreparationPreservedOriginal": true,
+      "restorePointVerified": true,
+      "rollback": {
+        "changedConfigurationPreserved": true,
+        "configurationRestored": true,
+        "originalPackageExact": true,
+        "stage": "restored",
+        "unrelatedFilePreserved": true
+      },
+      "stage": "succeeded",
+      "target": "0.162.1"
+    },
+    {
+      "agent": "gemini",
+      "original": "0.62.0",
+      "rejectedPreparationPreservedOriginal": true,
+      "restorePointVerified": true,
+      "rollback": {
+        "changedConfigurationPreserved": true,
+        "configurationRestored": true,
+        "originalPackageExact": true,
+        "stage": "restored",
+        "unrelatedFilePreserved": true
+      },
+      "stage": "succeeded",
+      "target": "0.63.0"
+    }
+  ],
+  "status": "passed"
+}
