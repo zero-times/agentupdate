@@ -1,4 +1,4 @@
-import {spawn} from 'node:child_process';import {mkdir,mkdtemp,writeFile,readFile,rm,symlink,readdir,stat} from 'node:fs/promises';import {createHash} from 'node:crypto';import {createRequire} from 'node:module';import path from 'node:path';import os from 'node:os';import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';import {mkdir,mkdtemp,writeFile,readFile,rm,symlink,readdir,stat} from 'node:fs/promises';import {createHash,randomBytes} from 'node:crypto';import {createRequire} from 'node:module';import path from 'node:path';import os from 'node:os';import assert from 'node:assert/strict';
 const repo=path.resolve('.'),arch=process.argv[2]??'arm64';
 const root=await mkdtemp(path.join(os.tmpdir(),`agentupdate-ui-${arch}-`));
 const node=arch==='x86_64'?path.join(repo,'.validation/node-x64/node-v22.20.0-darwin-x64/bin/node'):process.execPath;
@@ -23,13 +23,31 @@ try{
   before[agent]=await tree(path.join(root,agent,'lib/node_modules',pkg));
  }
  for(const [dir,name,content] of [['.codex','config.toml','model = "fixture"\n'],['.gemini','settings.json','{"fixture":true}\n']]){await mkdir(path.join(root,dir));await writeFile(path.join(root,dir,name),content,{mode:0o640});}
+ const desktopDir=path.join(root,'desktop-fixtures');await mkdir(desktopDir);
+ async function bundle(directory,version){
+  await mkdir(path.join(directory,'Contents/MacOS'),{recursive:true});
+  const source=path.join(desktopDir,'fixture.c');await writeFile(source,'int main(){return 0;}\n');
+  await run('/usr/bin/cc',[source,'-arch','arm64','-arch','x86_64','-o',path.join(directory,'Contents/MacOS/fixture')]);
+  await writeFile(path.join(directory,'Contents/Info.plist'),`<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>com.anthropic.claudefordesktop</string><key>CFBundleName</key><string>Claude</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleShortVersionString</key><string>${version}</string><key>CFBundleVersion</key><string>${version}</string><key>CFBundlePackageType</key><string>APPL</string></dict></plist>`);
+  await mkdir(path.join(directory,'Contents/Resources'));await writeFile(path.join(directory,'Contents/Resources/payload.bin'),randomBytes(800000));
+  await run('/usr/bin/codesign',['--force','--sign','-',directory]);
+ }
+ const oldApp=path.join(root,'Applications/Claude.app'),newApp=path.join(desktopDir,'new/Claude.app');
+ await bundle(oldApp,'1.0.0');await bundle(newApp,'2.0.0');const oldAppTree=await tree(oldApp);
+ const appZip=path.join(desktopDir,'Claude.zip');await run('/usr/bin/ditto',['-c','-k','--keepParent',newApp,appZip]);
+ const appBytes=await readFile(appZip),digest=createHash('sha256').update(appBytes).digest('hex');
+ await writeFile(path.join(desktopDir,digest+'.bin'),appBytes);
+ await writeFile(path.join(desktopDir,'claude.json'),JSON.stringify({token:'claude',version:'2.0.0',url:'https://downloads.claude.ai/releases/darwin/universal/2.0.0/Claude-fixture.zip',sha256:digest}));
+ const claudeConfig=path.join(root,'Library/Application Support/Claude/config.json');await mkdir(path.dirname(claudeConfig),{recursive:true});await writeFile(claudeConfig,'{"fixture":true}\n',{mode:0o600});
  const data=path.join(root,'app-data');await mkdir(data);const now=Date.now(),tag='v0.10.0',name='AgentUpdate-0.10.0-macos-universal.dmg';
  await writeFile(path.join(data,'release-cache.json'),JSON.stringify({schemaVersion:1,checkedAt:now,successfulAt:now,latest:{version:'0.10.0',tag,publishedAt:'2026-10-12T00:00:00Z',notes:'Synthetic newer release for UI check. No public release created.',url:'https://github.com/zero-times/agentupdate/releases/tag/'+tag,assets:[{name,url:'https://github.com/zero-times/agentupdate/releases/download/'+tag+'/'+name}]},etag:null,errorCode:null,retryAfter:0}),{mode:0o600});
  const destination=path.join(root,'result.json');const binary=path.join(repo,'experiments/desktop-spike/src-tauri/target/universal-apple-darwin/release/bundle/macos/AgentUpdate Validation.app/Contents/MacOS/agentupdate');
- await run('/usr/bin/arch',[arch==='x86_64'?'-x86_64':'-arm64',binary],{PATH:[path.join(root,'codex/bin'),path.join(root,'gemini/bin'),path.dirname(node),'/usr/bin','/bin'].join(':'),AGENTUPDATE_TEST_DATA_DIR:data,AGENTUPDATE_TEST_CATALOG_DIR:path.join(root,'catalog'),AGENTUPDATE_TEST_OFFLINE:'1',AGENTUPDATE_NPM_CACHE:cache,AGENTUPDATE_VALIDATION_RESULT:destination,AGENTUPDATE_VALIDATION_WORKFLOW:'1'},1200000);
+ await run('/usr/bin/arch',[arch==='x86_64'?'-x86_64':'-arm64',binary],{PATH:[path.join(root,'codex/bin'),path.join(root,'gemini/bin'),path.dirname(node),'/usr/bin','/bin'].join(':'),AGENTUPDATE_TEST_DATA_DIR:data,AGENTUPDATE_TEST_DESKTOP_DIR:desktopDir,AGENTUPDATE_TEST_PROGRESS_DELAY_MS:'100',AGENTUPDATE_TEST_CATALOG_DIR:path.join(root,'catalog'),AGENTUPDATE_TEST_OFFLINE:'1',AGENTUPDATE_NPM_CACHE:cache,AGENTUPDATE_VALIDATION_RESULT:destination,AGENTUPDATE_VALIDATION_WORKFLOW:'1'},1200000);
  const result=JSON.parse(await readFile(destination,'utf8'));assert.equal(result.architecture,arch==='x86_64'?'x86_64':'aarch64');assert(Object.values(result.checks).every(v=>v===true));assert.equal(result.transactions.length,2);assert(result.transactions.every(tx=>tx.stage==='restored'));
  for(const [agent,pkg] of [['codex','@openai/codex'],['gemini','@google/gemini-cli']])assert.deepEqual(await tree(path.join(root,agent,'lib/node_modules',pkg)),before[agent]);
  assert.equal(await readFile(path.join(root,'.codex/config.toml'),'utf8'),'model = "fixture"\n');assert.equal(await readFile(path.join(root,'.gemini/settings.json'),'utf8'),'{"fixture":true}\n');
- evidence.result=result;evidence.originalPackageTreesExact=true;evidence.status='passed';console.log(`PASS real React UI selects, confirms batch, updates, restores both tools, exports and checks retention/release (${arch})`);
+ assert.deepEqual(await tree(oldApp),oldAppTree);assert.equal(await readFile(claudeConfig,'utf8'),'{"fixture":true}\n');
+ evidence.desktopFixtureOriginalExact=true;evidence.desktopTransferBytes=appBytes.length;
+ evidence.result=result;evidence.originalPackageTreesExact=true;evidence.status='passed';console.log(`PASS real React UI directly updates both tools with progress, hides current upgrades, installs/restores signed desktop fixture, exports and checks retention/release (${arch})`);
 }catch(error){evidence.status='failed';evidence.error=error.message;throw error;}
 finally{await writeFile(path.join(repo,`docs/evidence/v${JSON.parse(await readFile(path.join(repo,'package.json'),'utf8')).version}-ui-${arch}.json`),JSON.stringify(evidence,null,2)+'\n');await rm(root,{recursive:true,force:true});}

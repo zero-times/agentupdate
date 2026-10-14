@@ -25,6 +25,14 @@ pub fn execute_item(
     id: &str,
     context: &npm::Context,
 ) -> Result<UpdateTransaction, AppError> {
+    let target = store.transaction(id)?.installation.id;
+    crate::progress::operation(&target, || execute_item_inner(store, id, context))
+}
+fn execute_item_inner(
+    store: &mut Store,
+    id: &str,
+    context: &npm::Context,
+) -> Result<UpdateTransaction, AppError> {
     let tx = store.transaction(id)?;
     let prefix = tx
         .installation
@@ -40,6 +48,7 @@ pub fn execute_item(
         }
     };
     if check_cancel(store).is_err() {
+        crate::progress::phase(crate::progress::Phase::Cancelled);
         return store.transition(id, Stage::Queued, Stage::Cancelled, None);
     }
     let transaction = store.transition(id, Stage::Queued, Stage::Preflight, None)?;
@@ -51,6 +60,7 @@ pub fn execute_item(
         }
         check_cancel(store)?;
         let tx = store.transition(id, Stage::Preflight, Stage::BackingUp, None)?;
+        crate::progress::phase(crate::progress::Phase::BackingUp);
         backup::prepare(store, &tx, &context.home)?;
         check_cancel(store)?;
         let work = store.root.join("work").join(id);
@@ -107,6 +117,7 @@ pub fn execute_item(
         }
     };
     let transaction = store.transition(id, Stage::Prepared, Stage::Installing, None)?;
+    crate::progress::phase(crate::progress::Phase::Installing);
     let outcome = (|| {
         if native::handles(&transaction.installation) {
             native::install(&transaction, &staged, context)?;
@@ -114,6 +125,7 @@ pub fn execute_item(
             npm::swap_package(&transaction, &staged)?;
         }
         let transaction = store.transition(id, Stage::Installing, Stage::Verifying, None)?;
+        crate::progress::phase(crate::progress::Phase::Verifying);
         if native::handles(&transaction.installation) {
             native::verify_installed(&transaction, context, &store.root.join("work").join(id))
         } else {

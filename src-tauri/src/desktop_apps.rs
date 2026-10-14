@@ -177,20 +177,41 @@ pub fn parse_claude_release(
     }
     Ok((version.into(), Some(raw.into())))
 }
+fn catalog(product: Product) -> Result<serde_json::Value, AppError> {
+    #[cfg(feature = "desktop-validation")]
+    if let Some(root) = std::env::var_os("AGENTUPDATE_TEST_DESKTOP_DIR") {
+        let bytes = fs::read(PathBuf::from(root).join(format!("{}.json", product.token())))
+            .map_err(|_| AppError::new("APP_CHANNEL_RESPONSE", "隔离测试目录不可用。"))?;
+        return serde_json::from_slice(&bytes)
+            .map_err(|_| AppError::new("APP_CHANNEL_RESPONSE", "隔离测试目录无效。"));
+    }
+    channels::cask(product.token())
+}
 fn upstream(product: Product, arch: &str) -> Result<(String, Option<String>), AppError> {
+    #[cfg(feature = "desktop-validation")]
+    if std::env::var_os("AGENTUPDATE_TEST_DESKTOP_DIR").is_some() {
+        return parse_upstream(product, &catalog(product)?, arch);
+    }
     if product == Product::Claude {
         let bytes = channels::claude_document("releases/darwin/universal/RELEASES.json")?;
         let value = serde_json::from_slice(&bytes)
             .map_err(|_| AppError::new("APP_CHANNEL_RESPONSE", "Claude 官方更新响应无效。"))?;
         parse_claude_release(&value)
     } else {
-        parse_upstream(product, &channels::cask(product.token())?, arch)
+        parse_upstream(product, &catalog(product)?, arch)
     }
 }
 pub fn discover(home: &Path) -> Vec<(Product, LocalApp)> {
     let mut found = Vec::new();
     let mut seen = std::collections::HashSet::new();
-    for directory in [PathBuf::from("/Applications"), home.join("Applications")] {
+    let directories = [PathBuf::from("/Applications"), home.join("Applications")];
+    #[cfg(feature = "desktop-validation")]
+    let directories = if std::env::var_os("AGENTUPDATE_TEST_DESKTOP_DIR").is_some() {
+        [home.join("Applications"), home.join("Applications")]
+    } else {
+        directories
+    };
+    for directory in directories {
         if let Ok(entries) = fs::read_dir(directory) {
             for entry in entries.flatten().take(256) {
                 let path = entry.path();
@@ -264,10 +285,14 @@ fn identify(value: &serde_json::Value) -> Option<Product> {
         .find(|product| identifier == product.bundle())
 }
 pub fn check(home: &Path, arch: &str) -> Vec<AppCheck> {
+    check_selected(home, arch, None)
+}
+pub fn check_selected(home: &Path, arch: &str, selected: Option<Product>) -> Vec<AppCheck> {
     let installed = discover(home);
     std::thread::scope(|scope| {
         let jobs: Vec<_> = [Product::Codex, Product::Claude, Product::Chatgpt]
             .into_iter()
+            .filter(|p| selected.is_none_or(|s| s == *p))
             .map(|product| {
                 let mut local: Vec<_> = installed
                     .iter()
@@ -367,7 +392,7 @@ pub fn open(product: Product, download: bool, arch: &str) -> Result<(), AppError
 /// Installation uses the hashed Homebrew catalog entry, independently constrained to
 /// the product's official server. Claude's rolling feed can precede this checksum.
 pub fn package(product: Product, arch: &str) -> Result<crate::deploy::Package, AppError> {
-    let value = channels::cask(product.token())?;
+    let value = catalog(product)?;
     let (version, url) = parse_upstream(product, &value, arch)?;
     let url =
         url.ok_or_else(|| AppError::new("APP_ARCHITECTURE", "没有此架构的可信应用安装包。"))?;

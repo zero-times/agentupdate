@@ -1,9 +1,18 @@
-import {useEffect,useRef,useState} from 'react';
-import {prepareAppInstall,finishAppInstall,errorMessage,type BundleProduct,type AppInstall} from '../api/desktop';
-export function BundleInstall({product,label,onInstalled}:{product:BundleProduct;label:string;onInstalled?:()=>void}) {
- const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [stage,setStage]=useState<AppInstall>();const [restarting,setRestarting]=useState(false);const active=useRef(false);const dialog=useRef<HTMLDialogElement>(null);
- useEffect(()=>{if(stage)dialog.current?.showModal();},[stage]);
- async function prepare(){if(active.current)return;active.current=true;setBusy(true);setError('');try{setStage(await prepareAppInstall(product));}catch(e){setError(errorMessage(e));}finally{active.current=false;setBusy(false);}}
- async function finish(){if(active.current||!stage)return;active.current=true;setBusy(true);setError('');const id=stage.id;dialog.current?.close();setStage(undefined);try{const installed=await finishAppInstall(id);if(installed.state==='restarting'){setRestarting(true);return;}onInstalled?.();}catch(e){setError(errorMessage(e));}finally{active.current=false;setBusy(false);}}
- return <><button className="primary" disabled={busy||restarting} onClick={()=>void prepare()}>{restarting?'正在安装并重启…':busy?'正在下载、校验与备份…':label}</button>{error&&<p className="notice" role="alert">{error}</p>}{stage&&<dialog ref={dialog} aria-label="确认应用安装" onCancel={()=>{if(!busy)setStage(undefined);}}><h2>{product==='agentupdate'?'安装并重启 AgentUpdate':'安装已校验应用'}</h2><p>目标版本：{stage.version}。安装包、应用身份、签名及架构已校验。</p><p className="path">{stage.destination}</p><p>{stage.hasBackup?'旧应用与配置备份已保存，失败时可恢复。':'将安装新应用，并保留现有配置。'}{product==='agentupdate'?'确认后 AgentUpdate 将退出，由后台进程替换并重启。':'请保持目标应用退出状态。'}</p><div className="dialog-actions"><button disabled={busy} onClick={()=>setStage(undefined)}>稍后安装</button><button className="primary" disabled={busy} onClick={()=>void finish()}>{product==='agentupdate'?'安装并重启':'确认安装'}</button></div></dialog>}</>;
+import {useRef,useState} from 'react';
+import {installApp,errorMessage,type BundleProduct} from '../api/desktop';
+import {OperationProgress,useOperationProgress} from './OperationProgress';
+
+export function BundleInstall({product,label,onInstalled,onBusyChange,disabled=false}:{product:BundleProduct;label:string;onInstalled?:()=>void|Promise<void>;onBusyChange?:(busy:boolean)=>void;disabled?:boolean}) {
+ const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [restarting,setRestarting]=useState(false);const active=useRef(false);
+ const {progress,start,fail,channel}=useOperationProgress();const target=`app:${product}`;
+ async function install(){
+  if(active.current)return;active.current=true;setBusy(true);onBusyChange?.(true);setError('');start(target);let reboot=false;
+  try {
+   const installed=await installApp(product,channel());
+   if(installed.state==='restarting'){reboot=true;setRestarting(true);return;}
+   await onInstalled?.();
+  } catch(e){fail(target);setError(errorMessage(e));}
+  finally{if(!reboot){active.current=false;onBusyChange?.(false);}setBusy(false);}
+ }
+ return <div className="bundle-install"><button className="primary" disabled={disabled||busy||restarting||progress[target]?.phase==='succeeded'} onClick={()=>void install()}>{restarting?'正在安装并重启…':busy?'正在安装…':progress[target]?.phase==='succeeded'?'安装完成':label}</button>{progress[target]&&<OperationProgress progress={progress[target]}/>} {error&&<p className="notice" role="alert">{error}</p>}</div>;
 }

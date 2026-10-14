@@ -2,7 +2,7 @@
 
 AgentUpdate 是一个桌面应用，用于集中管理本机 AI Agent 工具的版本。用户可以选择多个工具，一次更新到指定版本或最新稳定版；应用默认在修改前备份配置，并在升级失败时提供一键回滚入口。
 
-下载当前版本：[GitHub Releases](https://github.com/zero-times/agentupdate/releases/latest)。v0.2.1 提供 macOS 15+ 的 Apple Silicon / Intel 通用 DMG 和应用 ZIP，并附带 SHA256SUMS。安装包采用 ad-hoc 完整性签名，未完成 Developer ID 签名与 Apple 公证。
+下载当前版本：[GitHub Releases](https://github.com/zero-times/agentupdate/releases/latest)。v0.2.2 提供 macOS 15+ 的 Apple Silicon / Intel 通用 DMG 和应用 ZIP，并附带 SHA256SUMS。安装包采用 ad-hoc 完整性签名，未完成 Developer ID 签名与 Apple 公证。
 
 v0.2.1 重新设计了工作台：侧栏分别进入 CLI 工具、桌面应用和本应用更新，保留安装、升级、备份与恢复能力。可从 v0.2.0 通过“检查应用更新 → 下载更新并安装重启”测试在线升级；[新版界面与测试说明](docs/v0.2.1-ui.md)。
 
@@ -181,3 +181,5 @@ agentupdate/
 ## 下一步
 
 v0.2.0 已经用户验收，并通过 GitHub Desktop 提交到 `main`、推送版本标签和发布 [GitHub Release](https://github.com/zero-times/agentupdate/releases/tag/v0.2.0)。发布包来自干净源码提交，提供构建清单、安装验证记录和校验文件；采用用户接受的 ad-hoc 签名，Developer ID 签名公证与独立设备验收仍待补齐。
+
+最近交互更新：[v0.2.2 安装进度与直接升级](docs/v0.2.2-progress.md)。CLI、桌面应用与本应用更新均显示进度，点击升级后直接安装；每个工具可主动检测，已最新时隐藏升级按钮。

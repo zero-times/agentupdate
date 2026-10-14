@@ -366,6 +366,7 @@ pub fn stage(
     files::private_directory(work)?;
     let binary = work.join("target.tgz"); // shared immutable download cache; contents are a native executable
     super::npm::download(&tx.installation, &tx.target, &binary)?;
+    crate::progress::phase(crate::progress::Phase::Staging);
     let binary = if tx.installation.agent_id == AgentId::Codex {
         let extracted = work.join("codex-extracted");
         crate::artifacts::unpack(&binary, &extracted, false)?;

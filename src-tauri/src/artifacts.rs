@@ -89,6 +89,7 @@ pub fn sha256(path: &Path) -> Result<String, AppError> {
     Ok(format!("{:x}", hash.finalize()))
 }
 pub fn download(url: &str, digest: &str, path: &Path) -> Result<(), AppError> {
+    crate::progress::phase(crate::progress::Phase::Downloading);
     if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
         return Err(error());
     }
@@ -99,9 +100,9 @@ pub fn download(url: &str, digest: &str, path: &Path) -> Result<(), AppError> {
         }
         return Err(error());
     }
-    let r = response(url, 600)?;
+    let (r, total) = download_reader(url, digest)?;
     const LIMIT: u64 = 1024 * 1024 * 1024;
-    if r.content_length().is_some_and(|n| n > LIMIT) {
+    if total.is_some_and(|n| n > LIMIT) {
         return Err(error());
     }
     let partial = path.with_extension("partial");
@@ -111,7 +112,8 @@ pub fn download(url: &str, digest: &str, path: &Path) -> Result<(), AppError> {
             .write(true)
             .open(&partial)
             .map_err(|_| error())?;
-        let size = std::io::copy(&mut r.take(LIMIT + 1), &mut file).map_err(|_| error())?;
+        let size =
+            crate::progress::copy_download(r, &mut file, LIMIT, total).map_err(|_| error())?;
         file.flush().map_err(|_| error())?;
         file.sync_all().map_err(|_| error())?;
         if size > LIMIT || sha256(&partial)? != digest.to_lowercase() {
@@ -124,6 +126,25 @@ pub fn download(url: &str, digest: &str, path: &Path) -> Result<(), AppError> {
         let _ = fs::remove_file(partial);
     }
     result
+}
+fn download_reader(url: &str, _digest: &str) -> Result<(Box<dyn Read>, Option<u64>), AppError> {
+    #[cfg(feature = "desktop-validation")]
+    if let Some(root) = std::env::var_os("AGENTUPDATE_TEST_DESKTOP_DIR") {
+        struct Fixture(fs::File);
+        impl Read for Fixture {
+            fn read(&mut self, bytes: &mut [u8]) -> std::io::Result<usize> {
+                std::thread::sleep(Duration::from_millis(20));
+                self.0.read(bytes)
+            }
+        }
+        let file = fs::File::open(std::path::PathBuf::from(root).join(format!("{_digest}.bin")))
+            .map_err(|_| error())?;
+        let size = file.metadata().map_err(|_| error())?.len();
+        return Ok((Box::new(Fixture(file)), Some(size)));
+    }
+    let response = response(url, 600)?;
+    let total = response.content_length();
+    Ok((Box::new(response), total))
 }
 pub fn unpack(package: &Path, destination: &Path, zip: bool) -> Result<(), AppError> {
     files::private_directory(destination)?;

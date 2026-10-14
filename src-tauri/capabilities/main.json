@@ -30,6 +30,7 @@
     "allow-cli-install-history",
     "allow-rollback-cli-install",
     "allow-prepare-app-install",
+    "allow-install-app",
     "allow-app-install-history",
     "allow-finish-app-install",
     "allow-rollback-app-install"

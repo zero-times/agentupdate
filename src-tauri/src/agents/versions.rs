@@ -20,6 +20,26 @@ pub struct VersionCatalog {
     pub versions: Vec<AvailableVersion>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct VersionCheck {
+    #[serde(flatten)]
+    pub catalog: VersionCatalog,
+    pub state: &'static str,
+}
+pub fn update_state(current: Option<&str>, latest: &str) -> &'static str {
+    let Some((current, latest)) = current
+        .and_then(|v| semver::Version::parse(v).ok())
+        .zip(semver::Version::parse(latest).ok())
+    else {
+        return "unknown_version";
+    };
+    match current.cmp_precedence(&latest) {
+        std::cmp::Ordering::Less => "update_available",
+        std::cmp::Ordering::Equal => "up_to_date",
+        std::cmp::Ordering::Greater => "local_newer",
+    }
+}
+
 pub fn fetch(agent: AgentId, include_prerelease: bool) -> Result<VersionCatalog, AppError> {
     #[cfg(feature = "desktop-validation")]
     if let Some(root) = std::env::var_os("AGENTUPDATE_TEST_CATALOG_DIR") {

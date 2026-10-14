@@ -23,6 +23,14 @@ pub enum BundleProduct {
     Chatgpt,
 }
 impl BundleProduct {
+    pub fn key(self) -> &'static str {
+        match self {
+            Self::Codex => "codex",
+            Self::Claude => "claude",
+            Self::Chatgpt => "chatgpt",
+            Self::Agentupdate => "agentupdate",
+        }
+    }
     pub fn name(self) -> &'static str {
         match self {
             Self::Agentupdate => "AgentUpdate.app",
@@ -435,9 +443,11 @@ pub fn prepare_at(
         "package.dmg"
     });
     artifacts::download(&package.url, &package.sha256, &path)?;
+    crate::progress::phase(crate::progress::Phase::Staging);
     let bundle = unpack(&path, &work, product, package.zip)?;
     verify_bundle(&bundle, product, &package.version, arch)?;
     let staged = snapshot::scan(&bundle, None)?;
+    crate::progress::phase(crate::progress::Phase::BackingUp);
     snapshot::copy(home, &work.join("config"), &config)?;
     if let Some(old) = &original {
         copy(&destination, &work.join("original.app"))?;
@@ -470,6 +480,14 @@ fn validate_record(root: &Path, home: &Path, id: &str) -> Result<(PathBuf, Recor
 }
 pub fn install(root: &Path, home: &Path, id: &str, arch: &str) -> Result<Record, AppError> {
     let _lock = OperationLock::acquire(&root.join("locks/operation.lock"))?;
+    install_locked(root, home, id, arch)
+}
+pub(crate) fn install_locked(
+    root: &Path,
+    home: &Path,
+    id: &str,
+    arch: &str,
+) -> Result<Record, AppError> {
     let (work, mut r) = validate_record(root, home, id)?;
     if r.state != "prepared" {
         return Err(err("APP_INSTALL_STATE"));
@@ -500,6 +518,7 @@ pub fn install(root: &Path, home: &Path, id: &str, arch: &str) -> Result<Record,
     if replacement.exists() || displaced.exists() {
         return Err(err("APP_SWAP_CONFLICT"));
     }
+    crate::progress::phase(crate::progress::Phase::Installing);
     copy(&source, &replacement)?;
     snapshot::verify_tree(&replacement, &r.staged)?;
     running(&r.destination)?;
@@ -519,6 +538,7 @@ pub fn install(root: &Path, home: &Path, id: &str, arch: &str) -> Result<Record,
         }
         fs::rename(&replacement, &r.destination).map_err(|_| err("APP_SWAP"))?;
         files::sync_directory(r.destination.parent().unwrap())?;
+        crate::progress::phase(crate::progress::Phase::Verifying);
         snapshot::verify_tree(&r.destination, &r.staged)?;
         verify_bundle(&r.destination, r.product, &r.version, arch)?;
         Ok(())

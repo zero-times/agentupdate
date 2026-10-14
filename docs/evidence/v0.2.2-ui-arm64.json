@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-14T01:59:16.307Z",
+  "architecture": "arm64",
+  "execution": "native Apple Silicon",
+  "catalogSource": "Pinned previously fetched official npm metadata and artifacts, revalidated by production code",
+  "isolation": "Temporary HOME, explicit npm prefixes, artificial configuration; no daily Agent changes",
+  "status": "failed",
+  "error": "ENOENT: no such file or directory, open '/var/folders/vd/q5v96dpn2p9f8zqrbcnjhbbc0000gn/T/agentupdate-ui-arm64-WTAWgc/result.json'"
+}

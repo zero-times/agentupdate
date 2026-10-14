@@ -1,4 +1,9 @@
-import { invoke, isTauri } from '@tauri-apps/api/core';
+import { Channel, invoke, isTauri } from '@tauri-apps/api/core';
+export { Channel };
+
+export type ProgressPhase = 'queued'|'checking'|'backing_up'|'downloading'|'staging'|'installing'|'verifying'|'restarting'|'succeeded'|'failed'|'cancelled';
+export type OperationProgress = {target:string;phase:ProgressPhase;downloadedBytes:number;totalBytes:number|null;errorCode:string|null};
+export type ProgressChannel = Channel<OperationProgress>;
 
 export type AgentId = 'codex' | 'gemini' | 'claude' | 'deepseek';
 export type AgentSupport = {
@@ -38,7 +43,7 @@ export type Installation = {
 };
 export type DiscoveryReport = { instances: Installation[]; warnings: string[] };
 export type AvailableVersion = { version: string; prerelease: boolean; tarball: string; integrity: string };
-export type VersionCatalog = { agentId: AgentId; latestStable: string; versions: AvailableVersion[] };
+export type VersionCatalog = { agentId: AgentId; latestStable: string; versions: AvailableVersion[]; state:'update_available'|'up_to_date'|'local_newer'|'unknown_version' };
 export function discoverAgents(extraPaths: string[] = []): Promise<DiscoveryReport> {
   return invoke('discover_agents', { extraPaths });
 }
@@ -61,13 +66,13 @@ export type PlanRequest = { instanceId: string; target: string; allowPrerelease:
 export function createPlan(requests: PlanRequest[]): Promise<UpdatePlan> { return invoke('create_update_plan', { requests }); }
 export function planHistory(): Promise<UpdatePlan[]> { return invoke('get_plan_history'); }
 
-export function executeUpdate(transactionId: string): Promise<UpdateTransaction> { return invoke('execute_update', { transactionId }); }
+export function executeUpdate(transactionId: string): Promise<UpdateTransaction> { return invoke('execute_update', { transactionId, onProgress:new Channel<OperationProgress>() }); }
 
 export type RollbackPreview = { transactionId: string; originalVersion: string; configurationChanged: boolean; restoresAbsentFiles: boolean; preservationLocation: string };
 export function previewRollback(transactionId: string): Promise<RollbackPreview> { return invoke('preview_rollback', { transactionId }); }
 export function rollbackUpdate(transactionId: string, confirmChangedConfig = false): Promise<UpdateTransaction> { return invoke('rollback_update', { transactionId, confirmChangedConfig }); }
 
-export function executePlan(planId: string, continueAfterFailure = false): Promise<UpdatePlan> { return invoke('execute_plan', { planId, continueAfterFailure }); }
+export function executePlan(planId: string, continueAfterFailure = false, onProgress?:ProgressChannel): Promise<UpdatePlan> { return invoke('execute_plan', { planId, continueAfterFailure, onProgress:onProgress??new Channel<OperationProgress>() }); }
 export function cancelPlan(planId: string): Promise<UpdatePlan> { return invoke('cancel_plan', { planId }); }
 
 export type RecoveryReport = {busy:boolean; items:{transactionId:string;stage:Stage;materialReady:boolean;materialError:string|null;currentVersion:string|null;installationError:string|null}[]};
@@ -86,16 +91,17 @@ export function openRelease(asset=false):Promise<void> {return invoke('open_app_
 
 export type DesktopProduct = 'codex'|'claude'|'chatgpt';
 export type DesktopAppCheck = {product:DesktopProduct;name:string;installed:{path:string;version:string|null;build:string|null;state:string}[];latestVersion:string|null;state:string;checkedAt:number;metadataSource:string;officialPage:string;downloadAvailable:boolean;errorCode:string|null;channelNote:string};
-export function checkDesktopApps():Promise<DesktopAppCheck[]> {return invoke('check_desktop_apps');}
+export function checkDesktopApps(product?:DesktopProduct):Promise<DesktopAppCheck[]> {return invoke('check_desktop_apps',{product:product??null});}
 export function openDesktopChannel(product:DesktopProduct,download=false):Promise<void> {return invoke('open_desktop_app_channel',{product,download});}
 
 export type CliInstall = {id:string;agent:AgentId;version:string;state:string;command:string;package:string;failureCode:string|null;createdAt:number};
-export function installCli(agent:AgentId,allowPrerelease=false):Promise<CliInstall>{return invoke('install_cli',{agent,allowPrerelease});}
+export function installCli(agent:AgentId,allowPrerelease=false,onProgress?:ProgressChannel):Promise<CliInstall>{return invoke('install_cli',{agent,allowPrerelease,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function cliInstalls():Promise<CliInstall[]>{return invoke('cli_install_history');}
 export function rollbackCliInstall(id:string):Promise<CliInstall>{return invoke('rollback_cli_install',{id});}
 export type BundleProduct=DesktopProduct|'agentupdate';
 export type AppInstall={id:string;product:BundleProduct;version:string;destination:string;state:string;hasBackup:boolean;failureCode:string|null;createdAt:number};
 export function prepareAppInstall(product:BundleProduct):Promise<AppInstall>{return invoke('prepare_app_install',{product});}
-export function finishAppInstall(id:string):Promise<AppInstall>{return invoke('finish_app_install',{id});}
+export function installApp(product:BundleProduct,onProgress?:ProgressChannel):Promise<AppInstall>{return invoke('install_app',{product,onProgress:onProgress??new Channel<OperationProgress>()});}
+export function finishAppInstall(id:string,onProgress?:ProgressChannel):Promise<AppInstall>{return invoke('finish_app_install',{id,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function appInstalls():Promise<AppInstall[]>{return invoke('app_install_history');}
 export function rollbackAppInstall(id:string):Promise<AppInstall>{return invoke('rollback_app_install',{id});}

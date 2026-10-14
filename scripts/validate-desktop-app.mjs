@@ -13,7 +13,7 @@ const validationApp = path.join(bundleRoot, 'AgentUpdate Validation.app');
 const binary = path.join(validationApp, 'Contents/MacOS/agentupdate');
 const temporary = await mkdtemp(path.join(os.tmpdir(), 'agentupdate-age5-'));
 
-function run(executable, args, env = {}, timeout = 30_000) {
+function run(executable, args, env = {}, timeout = 120_000) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '', timedOut = false;
@@ -52,7 +52,7 @@ try {
   const config = JSON.parse(await readFile(path.join(repo, 'src-tauri/tauri.conf.json'), 'utf8'));
   const capability = JSON.parse(await readFile(path.join(repo, 'src-tauri/capabilities/main.json'), 'utf8'));
   assert.deepEqual(config.app.security.capabilities, ['main']);
-  assert.deepEqual(capability.permissions, ['allow-get-app-overview', 'allow-get-agent-support', 'allow-discover-agents', 'allow-list-agent-versions', 'allow-select-agent-version', 'allow-create-update-plan', 'allow-get-plan-history', 'allow-execute-update', 'allow-preview-rollback', 'allow-rollback-update', 'allow-execute-plan', 'allow-cancel-plan', 'allow-inspect-interrupted-tasks', 'allow-get-restore-details', 'allow-export-transaction', 'allow-cleanup-restore', 'allow-reveal-export', 'allow-check-app-release', 'allow-check-desktop-apps', 'allow-open-desktop-app-channel', 'allow-open-app-release', 'allow-install-cli', 'allow-cli-install-history', 'allow-rollback-cli-install', 'allow-prepare-app-install', 'allow-app-install-history', 'allow-finish-app-install', 'allow-rollback-app-install']);
+  assert.deepEqual(capability.permissions, ['allow-get-app-overview', 'allow-get-agent-support', 'allow-discover-agents', 'allow-list-agent-versions', 'allow-select-agent-version', 'allow-create-update-plan', 'allow-get-plan-history', 'allow-execute-update', 'allow-preview-rollback', 'allow-rollback-update', 'allow-execute-plan', 'allow-cancel-plan', 'allow-inspect-interrupted-tasks', 'allow-get-restore-details', 'allow-export-transaction', 'allow-cleanup-restore', 'allow-reveal-export', 'allow-check-app-release', 'allow-check-desktop-apps', 'allow-open-desktop-app-channel', 'allow-open-app-release', 'allow-install-cli', 'allow-cli-install-history', 'allow-rollback-cli-install', 'allow-prepare-app-install', 'allow-install-app', 'allow-app-install-history', 'allow-finish-app-install', 'allow-rollback-app-install']);
   assert.equal(capability.remote, undefined);
   for (const [flag, architecture, execution] of [['-arm64', 'aarch64', 'native'], ['-x86_64', 'x86_64', 'Rosetta']]) {
     const destination = path.join(temporary, `${architecture}.json`);

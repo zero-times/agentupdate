@@ -150,6 +150,7 @@ pub fn install_target(
     if config.bytes > 64 * 1024 * 1024 {
         return Err(err("CONFIG_TOO_LARGE"));
     }
+    crate::progress::phase(crate::progress::Phase::BackingUp);
     snapshot::copy(&config_root, &work.join("config"), &config)?;
     files::write_atomic(
         &work.join("config-manifest.json"),
@@ -202,6 +203,7 @@ pub fn install_target(
     };
     save(&work, &record)?;
     let result = (|| {
+        crate::progress::phase(crate::progress::Phase::Installing);
         if fs::symlink_metadata(&record.package).is_ok()
             || fs::symlink_metadata(&record.command).is_ok()
         {
@@ -227,6 +229,7 @@ pub fn install_target(
             .map_err(|_| err("INSTALL_LAUNCHER"))?;
         std::os::unix::fs::symlink(record.package.join(relative), &record.command)
             .map_err(|_| err("INSTALL_LAUNCHER"))?;
+        crate::progress::phase(crate::progress::Phase::Verifying);
         let report = discovery::discover(
             &DiscoveryContext {
                 home: ctx.home.clone(),

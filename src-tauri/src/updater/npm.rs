@@ -236,6 +236,7 @@ pub fn download(
     path: &Path,
 ) -> Result<(), AppError> {
     validate_source(instance, target)?;
+    crate::progress::phase(crate::progress::Phase::Downloading);
     if path.exists() {
         files::regular_private_file(path)?;
         let file = fs::File::open(path).map_err(|_| err("ARTIFACT_READ", "缓存制品无法读取。"))?;
@@ -271,9 +272,8 @@ pub fn download(
                 {
                     return Err(err("ARTIFACT_SIZE", "目标制品超出允许范围。"));
                 }
-                if response
-                    .take(256 * 1024 * 1024 + 1)
-                    .read_to_end(&mut bytes)
+                let total = response.content_length();
+                if crate::progress::copy_download(response, &mut bytes, 256 * 1024 * 1024, total)
                     .is_err()
                 {
                     last = err("DOWNLOAD_INTERRUPTED", "目标制品下载中断，原安装保留。");
@@ -303,6 +303,7 @@ pub fn stage(
     files::private_directory(work)?;
     let tarball = work.join("target.tgz");
     download(instance, &transaction.target, &tarball)?;
+    crate::progress::phase(crate::progress::Phase::Staging);
     let prefix = work.join("prefix");
     files::private_directory(&prefix)?;
     let empty = work.join("empty.user.npmrc");

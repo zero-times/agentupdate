@@ -178,6 +178,15 @@ pub fn build_plan(
                 "此实例已是所选版本，无需重复升级。",
             ));
         }
+        if request.target == "latest"
+            && agents::versions::update_state(installation.version.as_deref(), &target.version)
+                != "update_available"
+        {
+            return Err(AppError::new(
+                "NO_NEWER_VERSION",
+                "没有可确认的更新版本，请重新检测或指定目标版本。",
+            ));
+        }
         items.push(storage::model::PlannedItem {
             installation,
             target,

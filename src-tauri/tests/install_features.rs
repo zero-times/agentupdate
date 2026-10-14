@@ -278,7 +278,31 @@ fn bundle_fixture() -> (PathBuf, PathBuf, deploy::Record) {
 #[test]
 fn signed_bundle_swap_and_rollback_preserve_the_original() {
     let (home, data, r) = bundle_fixture();
-    let result = deploy::install(&data, &home, &r.id, std::env::consts::ARCH).unwrap();
+    let events = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let log = events.clone();
+    let result = agentupdate::progress::with_reporter(
+        Some(std::sync::Arc::new(move |p| log.lock().unwrap().push(p))),
+        || {
+            agentupdate::progress::operation("app:agentupdate", || {
+                deploy::install(&data, &home, &r.id, std::env::consts::ARCH)
+            })
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        events
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|p| p.phase)
+            .collect::<Vec<_>>(),
+        vec![
+            agentupdate::progress::Phase::Checking,
+            agentupdate::progress::Phase::Installing,
+            agentupdate::progress::Phase::Verifying,
+            agentupdate::progress::Phase::Succeeded
+        ]
+    );
     assert_eq!(result.state, "succeeded");
     assert_eq!(
         deploy::plist(&r.destination).unwrap()["CFBundleShortVersionString"],
