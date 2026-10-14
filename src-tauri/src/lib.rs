@@ -6,12 +6,18 @@ pub mod cli_launch;
 pub mod deploy;
 pub mod desktop_apps;
 pub mod error;
+pub mod panel;
 pub mod platform;
 pub mod progress;
 pub mod releases;
 pub mod service;
 pub mod storage;
 pub mod updater;
+
+#[tauri::command]
+fn hide_main_window(app: tauri::AppHandle) -> Result<(), error::AppError> {
+    panel::hide(&app)
+}
 
 #[tauri::command]
 fn get_cli_projects(app: tauri::AppHandle) -> Result<Vec<String>, error::AppError> {
@@ -714,6 +720,64 @@ async fn select_agent_version(
 mod validation {
     use serde::{Deserialize, Serialize};
 
+    #[tauri::command]
+    pub async fn probe_panel(
+        app: tauri::AppHandle,
+        action: String,
+    ) -> Result<serde_json::Value, String> {
+        use tauri::Manager;
+        tauri::async_runtime::spawn_blocking(move || {
+            let window = app
+                .get_webview_window("main")
+                .ok_or("Main window missing")?;
+            match action.as_str() {
+                "snapshot" => {}
+                "tray_click" => super::panel::handle_click(
+                    &app,
+                    tauri::tray::MouseButton::Left,
+                    tauri::tray::MouseButtonState::Up,
+                ),
+                "menu_open" => super::panel::menu_action(&app, "panel-open"),
+                "reopen" => super::panel::show(&app).map_err(|e| e.to_string())?,
+                "close" => window.close().map_err(|e| e.to_string())?,
+                "minimize" => window.minimize().map_err(|e| e.to_string())?,
+                "quit_busy" => {
+                    let state = app.state::<super::service::AppState>();
+                    let _operation = state.operation.lock().map_err(|e| e.to_string())?;
+                    app.exit(0);
+                    std::thread::sleep(std::time::Duration::from_millis(800));
+                }
+                _ => return Err("Unknown panel probe".into()),
+            }
+            Ok(serde_json::json!({
+                "visible": window.is_visible().map_err(|e| e.to_string())?,
+                "minimized": window.is_minimized().map_err(|e| e.to_string())?,
+                "trayPresent": app.tray_by_id("agentupdate-panel").is_some(),
+            }))
+        })
+        .await
+        .map_err(|e| e.to_string())?
+    }
+
+    #[tauri::command]
+    pub fn finish_panel_validation(
+        app: tauri::AppHandle,
+        checks: std::collections::BTreeMap<String, bool>,
+    ) -> Result<(), String> {
+        let destination = std::env::var_os("AGENTUPDATE_VALIDATION_RESULT")
+            .ok_or("Missing validation destination")?;
+        std::fs::write(
+            destination,
+            serde_json::to_vec_pretty(
+                &serde_json::json!({"checks": checks, "architecture": std::env::consts::ARCH}),
+            )
+            .map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())?;
+        app.exit(0);
+        Ok(())
+    }
+
     #[derive(Deserialize, Serialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     pub struct Checks {
@@ -817,6 +881,7 @@ pub fn run() {
     #[cfg(not(feature = "desktop-validation"))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         get_app_overview,
+        hide_main_window,
         check_app_release,
         check_desktop_apps,
         get_cli_projects,
@@ -852,6 +917,7 @@ pub fn run() {
     #[cfg(feature = "desktop-validation")]
     let builder = builder.invoke_handler(tauri::generate_handler![
         get_app_overview,
+        hide_main_window,
         check_app_release,
         check_desktop_apps,
         get_cli_projects,
@@ -884,11 +950,18 @@ pub fn run() {
         preview_rollback,
         rollback_update,
         validation::restricted_probe,
+        validation::probe_panel,
+        validation::finish_panel_validation,
         validation::finish_cli_launch_validation,
         validation::finish_desktop_validation,
         validation::finish_workflow_validation
     ]);
     builder
-        .run(tauri::generate_context!())
-        .expect("Could not run AgentUpdate");
+        .setup(|app| {
+            panel::setup(app.handle())?;
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("Could not build AgentUpdate")
+        .run(panel::on_run_event);
 }

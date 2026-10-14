@@ -1,0 +1,183 @@
+{
+  "checkedAt": "2026-10-14T09:00:39.606Z",
+  "hostArchitecture": "arm64",
+  "results": [
+    {
+      "architecture": "aarch64",
+      "execution": "native",
+      "checks": {
+        "arbitraryCommandDenied": true,
+        "arbitraryFileDenied": true,
+        "desktopProductsChecked": true,
+        "desktopRendered": true,
+        "desktopUpgradeVisibility": true,
+        "domainCall": true,
+        "filesystemPluginDenied": true,
+        "installCommandsReady": true,
+        "invalidAgentDenied": true,
+        "invalidDesktopProductDenied": true,
+        "invalidInstallAgentDenied": true,
+        "invalidInstallProductDenied": true,
+        "navigationWorks": true,
+        "perToolDetection": true,
+        "rendered": true,
+        "restrictedCommandDenied": true,
+        "shellPluginDenied": true
+      },
+      "overview": {
+        "agents": [
+          {
+            "description": "支持 npm 与 Homebrew Cask 检测、升级和恢复。",
+            "detectionState": "not_scanned",
+            "id": "codex",
+            "installationSource": "user_npm",
+            "name": "Codex CLI",
+            "updateEnabled": false
+          },
+          {
+            "description": "支持用户 npm、原生安装和 Homebrew Cask 最新稳定版升级。",
+            "detectionState": "not_scanned",
+            "id": "claude",
+            "installationSource": "user_npm",
+            "name": "Claude Code CLI",
+            "updateEnabled": false
+          },
+          {
+            "description": "官方 dsh npm 渠道；预发行版本需显式选择。",
+            "detectionState": "not_scanned",
+            "id": "deepseek",
+            "installationSource": "user_npm",
+            "name": "Deepseek Harness",
+            "updateEnabled": false
+          },
+          {
+            "description": "首批支持用户可写的 npm 安装；需要 macOS 15 或更高版本。",
+            "detectionState": "not_scanned",
+            "id": "gemini",
+            "installationSource": "user_npm",
+            "name": "Gemini CLI",
+            "updateEnabled": false
+          }
+        ],
+        "appRelease": {
+          "source": "https://github.com/zero-times/agentupdate/releases",
+          "state": "not_checked"
+        },
+        "appVersion": "0.2.4",
+        "backup": {
+          "requiredBeforeUpdate": true,
+          "state": "available"
+        },
+        "platform": {
+          "architecture": "aarch64",
+          "minimumSystemVersion": "15.0",
+          "os": "macos"
+        },
+        "storage": {
+          "state": "available"
+        },
+        "updater": {
+          "state": "available"
+        },
+        "validationCliLaunch": false,
+        "validationMode": true,
+        "validationPanel": false,
+        "validationWorkflow": false
+      }
+    },
+    {
+      "architecture": "x86_64",
+      "execution": "Rosetta",
+      "checks": {
+        "arbitraryCommandDenied": true,
+        "arbitraryFileDenied": true,
+        "desktopProductsChecked": true,
+        "desktopRendered": true,
+        "desktopUpgradeVisibility": true,
+        "domainCall": true,
+        "filesystemPluginDenied": true,
+        "installCommandsReady": true,
+        "invalidAgentDenied": true,
+        "invalidDesktopProductDenied": true,
+        "invalidInstallAgentDenied": true,
+        "invalidInstallProductDenied": true,
+        "navigationWorks": true,
+        "perToolDetection": true,
+        "rendered": true,
+        "restrictedCommandDenied": true,
+        "shellPluginDenied": true
+      },
+      "overview": {
+        "agents": [
+          {
+            "description": "支持 npm 与 Homebrew Cask 检测、升级和恢复。",
+            "detectionState": "not_scanned",
+            "id": "codex",
+            "installationSource": "user_npm",
+            "name": "Codex CLI",
+            "updateEnabled": false
+          },
+          {
+            "description": "支持用户 npm、原生安装和 Homebrew Cask 最新稳定版升级。",
+            "detectionState": "not_scanned",
+            "id": "claude",
+            "installationSource": "user_npm",
+            "name": "Claude Code CLI",
+            "updateEnabled": false
+          },
+          {
+            "description": "官方 dsh npm 渠道；预发行版本需显式选择。",
+            "detectionState": "not_scanned",
+            "id": "deepseek",
+            "installationSource": "user_npm",
+            "name": "Deepseek Harness",
+            "updateEnabled": false
+          },
+          {
+            "description": "首批支持用户可写的 npm 安装；需要 macOS 15 或更高版本。",
+            "detectionState": "not_scanned",
+            "id": "gemini",
+            "installationSource": "user_npm",
+            "name": "Gemini CLI",
+            "updateEnabled": false
+          }
+        ],
+        "appRelease": {
+          "source": "https://github.com/zero-times/agentupdate/releases",
+          "state": "not_checked"
+        },
+        "appVersion": "0.2.4",
+        "backup": {
+          "requiredBeforeUpdate": true,
+          "state": "available"
+        },
+        "platform": {
+          "architecture": "x86_64",
+          "minimumSystemVersion": "15.0",
+          "os": "macos"
+        },
+        "storage": {
+          "state": "available"
+        },
+        "updater": {
+          "state": "available"
+        },
+        "validationCliLaunch": false,
+        "validationMode": true,
+        "validationPanel": false,
+        "validationWorkflow": false
+      }
+    }
+  ],
+  "limitations": [
+    "x86_64 executes through Rosetta on Apple Silicon; physical Intel hardware remains untested.",
+    "Minimum macOS 15 is configured, not tested on macOS 15 hardware.",
+    "Ad-hoc signed development build; Developer ID and notarization belong to AGE-16.",
+    "This boundary check does not execute an Agent update or rollback; separate workflow checks cover those operations."
+  ],
+  "universalBundles": [
+    "AgentUpdate Validation.app"
+  ],
+  "adHocSignaturesVerified": true,
+  "status": "passed"
+}

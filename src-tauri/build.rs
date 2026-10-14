@@ -4,6 +4,8 @@ fn main() {
     if std::env::var_os("CARGO_FEATURE_DESKTOP_VALIDATION").is_none() {
         for name in [
             "restricted_probe",
+            "probe_panel",
+            "finish_panel_validation",
             "finish_cli_launch_validation",
             "finish_desktop_validation",
             "finish_workflow_validation",
@@ -21,6 +23,7 @@ fn main() {
         if std::env::var_os("CARGO_FEATURE_DESKTOP_VALIDATION").is_some() {
             &[
                 "get_app_overview",
+                "hide_main_window",
                 "check_app_release",
                 "check_desktop_apps",
                 "get_cli_projects",
@@ -53,6 +56,8 @@ fn main() {
                 "preview_rollback",
                 "rollback_update",
                 "restricted_probe",
+                "probe_panel",
+                "finish_panel_validation",
                 "finish_cli_launch_validation",
                 "finish_desktop_validation",
                 "finish_workflow_validation",
@@ -60,6 +65,7 @@ fn main() {
         } else {
             &[
                 "get_app_overview",
+                "hide_main_window",
                 "check_app_release",
                 "check_desktop_apps",
                 "get_cli_projects",

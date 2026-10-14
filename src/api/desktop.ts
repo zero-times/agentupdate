@@ -25,6 +25,7 @@ export type AppOverview = {
   validationMode: boolean;
   validationWorkflow: boolean;
   validationCliLaunch: boolean;
+  validationPanel: boolean;
 };
 
 // Browser previews do not fabricate local machine state.
@@ -109,3 +110,5 @@ export function installApp(product:BundleProduct,onProgress?:ProgressChannel):Pr
 export function finishAppInstall(id:string,onProgress?:ProgressChannel):Promise<AppInstall>{return invoke('finish_app_install',{id,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function appInstalls():Promise<AppInstall[]>{return invoke('app_install_history');}
 export function rollbackAppInstall(id:string):Promise<AppInstall>{return invoke('rollback_app_install',{id});}
+
+export const hideMainWindow = () => invoke<void>('hide_main_window');

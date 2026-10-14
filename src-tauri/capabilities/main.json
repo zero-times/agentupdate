@@ -36,6 +36,9 @@
     "allow-install-app",
     "allow-app-install-history",
     "allow-finish-app-install",
-    "allow-rollback-app-install"
+    "allow-rollback-app-install",
+    "allow-hide-main-window",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
   ]
 }

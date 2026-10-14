@@ -1,0 +1,43 @@
+{
+  "status": "partial",
+  "passed": [
+    "TypeScript",
+    "cargo fmt",
+    "universal validation build",
+    "12 native panel checks",
+    "native and Rosetta desktop capability boundary"
+  ],
+  "followupRegression": {
+    "suites": [
+      "history_retention",
+      "install_features",
+      "npm_updates",
+      "progress",
+      "restart_recovery",
+      "rollback_recovery",
+      "transaction_storage"
+    ],
+    "passed": 23,
+    "failed": 4,
+    "ignored": 9
+  },
+  "fullCheck": "Stopped at fault_hardening::changed_config_directory_permissions_are_confirmed_and_restore_original_mode: AGENT_RUNNING",
+  "failedFollowupTests": [
+    "restart_recovery::killed_install_and_recovery_processes_are_detected_and_restore_offline",
+    "rollback_recovery::changed_config_requires_confirmation_preserves_latest_and_restores_missing_and_modes",
+    "rollback_recovery::original_missing_directory_is_restored_and_failed_updates_can_recover",
+    "rollback_recovery::conflicting_configuration_type_keeps_material_and_reports_recovery_failed"
+  ],
+  "cause": "One user process has the bare command codex. Unchanged npm::process_uses_instance conservatively treats it as an occupied Codex instance. rollback checks running processes before entering Recovering; early AGENT_RUNNING keeps Succeeded rather than reaching RecoveryFailed.",
+  "limitations": [
+    "No full regression pass claimed.",
+    "No physical menu bar click, physical Intel, clean macOS15 or complete Codex update/rollback interaction verified."
+  ],
+  "baselineFilesUnchanged": [
+    "src-tauri/src/updater/npm.rs",
+    "src-tauri/src/updater/rollback.rs",
+    "src-tauri/tests/fault_hardening.rs",
+    "src-tauri/tests/restart_recovery.rs",
+    "src-tauri/tests/rollback_recovery.rs"
+  ]
+}

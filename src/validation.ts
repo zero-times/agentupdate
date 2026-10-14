@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { checkDesktopApps, cliProjects, getSupport, type AppOverview } from './api/desktop';
+import { appInstalls, checkDesktopApps, cliProjects, getSupport, type AppOverview } from './api/desktop';
 
 async function denied(command: string, args?: Record<string, unknown>) {
   try { await invoke(command, args); return false; } catch { return true; }
@@ -122,7 +122,8 @@ export async function validateWorkflow(_overview:AppOverview){
  await until(()=>document.querySelectorAll('.stage-succeeded').length===2);
  await until(()=>fixtureChoices().every(input=>{const instance=input.closest('.instance')!;return instance.textContent?.includes('已是最新版本')&&!Array.from(instance.querySelectorAll('button')).some(b=>b.textContent?.includes('一键升级'));}));
  const noInstallConfirmation=!confirmationSeen&&!document.querySelector('dialog[open]');
- const progressObserved=observed.has('staging')&&observed.has('installing')&&observed.has('succeeded')&&document.querySelectorAll('progress').length>=2;
+ const progressObserved=observed.has('staging')&&observed.has('installing')&&!document.querySelector('[data-progress-phase="succeeded"]');
+ for(const details of document.querySelectorAll<HTMLDetailsElement>('.recovery-history')) details.querySelector('summary')?.click();
  const updatedButtonsHidden=true;
  observer.disconnect();
  const bothUpdated=true;
@@ -146,14 +147,15 @@ export async function validateWorkflow(_overview:AppOverview){
  const appObserver=new MutationObserver(()=>{if(document.querySelector('dialog[open]'))appConfirm=true;for(const p of appCard.querySelectorAll('[data-progress-phase]'))appPhases.add(p.getAttribute('data-progress-phase')!);});
  appObserver.observe(document.body,{subtree:true,childList:true,attributes:true});
  clickButton('下载并升级',appCard);
- await until(()=>document.querySelector('[aria-label="应用安装记录"]')?.textContent?.includes('安装完成')??false);
+ await until(()=>document.querySelector('[aria-label="应用待处理安装"]')?.textContent?.includes('安装完成')??false);
  await until(()=>appCard.textContent?.includes('与公开稳定版一致')??false);
  const desktopDirectInstall=!appConfirm&&!appCard.querySelector('.bundle-install');
  const desktopProgress=appPhases.has('downloading')&&appPhases.has('staging')&&appPhases.has('installing');
  appObserver.disconnect();
- await readyButton('恢复旧应用',()=>document.querySelector('[aria-label="应用安装记录"]')!);clickButton('恢复旧应用',document.querySelector('[aria-label="应用安装记录"]')!);
- await until(()=>document.querySelector('[aria-label="应用安装记录"]')?.textContent?.includes('已恢复')??false);
- const desktopRestored=true;
+ document.querySelector<HTMLElement>('[aria-label="应用待处理安装"] .recovery-history > summary')!.click();
+ await readyButton('恢复旧应用',()=>document.querySelector('[aria-label="应用待处理安装"]')!);clickButton('恢复旧应用',document.querySelector('[aria-label="应用待处理安装"]')!);
+ await until(()=>appCard.textContent?.includes('发现新版本')??false);
+ const desktopRestored=(await appInstalls()).some(r=>r.product==='claude'&&r.state==='restored');
  document.querySelector<HTMLButtonElement>('[data-nav="cli"]')!.click();
  await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,noInstallConfirmation,progressObserved,updatedButtonsHidden,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt,desktopDirectInstall,desktopProgress,desktopRestored}});
 }
@@ -168,4 +170,49 @@ async function validateNavigation() {
   if(document.querySelector('main')!.scrollWidth>document.querySelector('main')!.clientWidth+1) return false;
  }
  return cards.every(card=>card.isConnected)&&document.querySelector('h1')?.textContent==='Agent 工作台';
+}
+
+export async function validatePanel(_overview: AppOverview) {
+ const checks: Record<string, boolean> = {};
+ type Snapshot = {visible:boolean;minimized:boolean;trayPresent:boolean};
+ const probe = (action:string) => invoke<Snapshot>('probe_panel',{action});
+ try {
+  await until(()=>!!document.querySelector('[aria-label="收起到菜单栏"]'));
+  checks.noPromotionalCopy=!document.body.innerText.includes('更新有底')&&!document.body.innerText.includes('每次更新');
+  const before=await probe('snapshot');
+  checks.trayCreated=before.trayPresent;
+  document.querySelector<HTMLButtonElement>('[aria-label="收起到菜单栏"]')!.click();
+  for(let i=0;i<30&&(await probe('snapshot')).visible;i++)await new Promise(r=>setTimeout(r,100));
+  checks.topButtonHides=!(await probe('snapshot')).visible;
+  checks.leftTrayCallbackOpens=(await probe('tray_click')).visible;
+  await probe('minimize');
+  const menuOpened=await probe('menu_open');
+  checks.menuRestoresMinimized=menuOpened.visible&&!menuOpened.minimized;
+  await probe('close');
+  for(let i=0;i<30&&(await probe('snapshot')).visible;i++)await new Promise(r=>setTimeout(r,100));
+  checks.closeKeepsWindowAndTray=!(await probe('snapshot')).visible&&(await probe('snapshot')).trayPresent;
+  checks.reopenShowsWindow=(await probe('reopen')).visible;
+  await probe('quit_busy');
+  checks.busyQuitDenied=(await probe('snapshot')).visible&&document.body.innerText.includes('当前安装或恢复尚未结束');
+  const {createRoot}=await import('react-dom/client');
+  const {createElement:h}=await import('react');
+  const {RecoveryHistory}=await import('./components/RecoveryHistory');
+  const {OperationProgress,initialProgress}=await import('./components/OperationProgress');
+  const host=document.createElement('div');document.querySelector('main')!.append(host);
+  const fixtureRoot=createRoot(host);
+  const items=[{id:'success',state:'succeeded'},{id:'failure',state:'needs_recovery'}];
+  fixtureRoot.render(h(RecoveryHistory<{id:string;state:string}>,{items,completed:(item:{state:string})=>item.state==='succeeded',title:'待处理测试',recoveryLabel:'恢复测试',children:(item:{id:string})=>h('p',{'data-panel-fixture':item.id},item.id)}));
+  await until(()=>!!host.querySelector('[data-panel-fixture="success"]'));
+  const saved=host.querySelector<HTMLElement>('[data-panel-fixture="success"]')!;
+  const failed=host.querySelector<HTMLElement>('[data-panel-fixture="failure"]')!;
+  checks.completedRecordsHidden=saved.closest<HTMLDetailsElement>("details")?.open===false;
+  checks.failuresVisible=failed.getClientRects().length>0;
+  host.querySelector('summary')!.click();
+  checks.recoveryCanExpand=saved.getClientRects().length>0;
+  fixtureRoot.render(h(OperationProgress,{progress:{...initialProgress('fixture'),phase:'succeeded'}}));
+  await until(()=>!host.querySelector('summary'));
+  checks.completedProgressHidden=host.innerHTML==='';
+  fixtureRoot.unmount();host.remove();
+ }catch(error){checks[String(error)]=false;}
+ await invoke('finish_panel_validation',{checks});
 }

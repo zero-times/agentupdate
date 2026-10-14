@@ -18,13 +18,13 @@ export function useOperationProgress() {
 }
 const mb=(bytes:number)=>(bytes/1024/1024).toFixed(1)+' MB';
 export function OperationProgress({progress,label='安装进度'}:{progress:Progress;label?:string}) {
+ if(progress.phase==='succeeded') return null;
  const downloading=progress.phase==='downloading';
  const measured=downloading&&!!progress.totalBytes;
- const finished=progress.phase==='succeeded';
  const stopped=['failed','cancelled'].includes(progress.phase);
- const value=finished?1:stopped||progress.phase==='queued'?0:measured?Math.min(1,progress.downloadedBytes/progress.totalBytes!):undefined;
+ const value=stopped||progress.phase==='queued'?0:measured?Math.min(1,progress.downloadedBytes/progress.totalBytes!):undefined;
  return <div className={`operation-progress phase-${progress.phase}`} data-progress-target={progress.target} data-progress-phase={progress.phase}>
-  <div className="progress-heading"><span role="status">{labels[progress.phase]}</span><span>{finished?'100%':measured?`${Math.floor(value!*100)}%`:''}</span></div>
+  <div className="progress-heading"><span role="status">{labels[progress.phase]}</span><span>{measured?`${Math.floor(value!*100)}%`:''}</span></div>
   <progress aria-label={label} value={value} max={1}/>
   {downloading&&<p className="muted">{mb(progress.downloadedBytes)}{progress.totalBytes?` / ${mb(progress.totalBytes)}`:' · 正在下载，文件大小尚未确认'}</p>}
   {progress.phase==='restarting'&&<p className="muted">安装包已校验，旧应用已备份。后台进程完成安装后自动打开新版。</p>}

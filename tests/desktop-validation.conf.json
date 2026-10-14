@@ -16,7 +16,9 @@
           "permissions": [
             "allow-finish-cli-launch-validation",
             "allow-finish-desktop-validation",
-            "allow-finish-workflow-validation"
+            "allow-finish-workflow-validation",
+            "allow-probe-panel",
+            "allow-finish-panel-validation"
           ]
         }
       ]

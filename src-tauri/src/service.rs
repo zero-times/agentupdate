@@ -208,6 +208,7 @@ pub struct AppOverview {
     pub validation_mode: bool,
     pub validation_workflow: bool,
     pub validation_cli_launch: bool,
+    pub validation_panel: bool,
 }
 
 pub fn overview() -> Result<AppOverview, AppError> {
@@ -223,6 +224,8 @@ pub fn overview() -> Result<AppOverview, AppError> {
             && std::env::var_os("AGENTUPDATE_VALIDATION_RESULT").is_some(),
         validation_workflow: cfg!(feature = "desktop-validation")
             && std::env::var_os("AGENTUPDATE_VALIDATION_WORKFLOW").is_some(),
+        validation_panel: cfg!(feature = "desktop-validation")
+            && std::env::var_os("AGENTUPDATE_VALIDATION_PANEL").is_some(),
         validation_cli_launch: cfg!(feature = "desktop-validation")
             && std::env::var_os("AGENTUPDATE_VALIDATION_CLI_LAUNCH").is_some(),
     })
