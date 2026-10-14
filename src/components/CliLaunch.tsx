@@ -44,7 +44,7 @@ export function CliLaunch({installation, onClose}: {installation: Installation; 
       </select></label>
       <label>项目目录<input autoFocus aria-label="项目目录" value={path} disabled={busy} onChange={e => {setPath(e.target.value); setNotice('');}} placeholder="例如 /Users/you/Projects/my-project" required /></label>
       {installation.agentId === 'deepseek' && <>
-        <label>启动 profile<input aria-label="Deepseek profile" value={profile} disabled={busy} onChange={e => setProfile(e.target.value)} placeholder="web" required pattern="[A-Za-z0-9_.-]+" maxLength={128}/></label>
+        <label>启动 profile<input aria-label="Deepseek profile" value={profile} disabled={busy} onChange={e => setProfile(e.target.value)} placeholder="web" required maxLength={128}/></label>
         <p className="muted">默认 web 启动 Harness 网页界面。其他名称须为已安装的 profile；tui 不属于内置模板。</p>
       </>}
       <p className="muted">可修改所选目录，或新增项目目录。最近使用的 20 个目录会保存在本机。</p>

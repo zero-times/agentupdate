@@ -18,3 +18,5 @@ Deepseek Harness 必须指定 profile。打开弹窗默认使用官方内置 `we
 验证：Rust 的 `cli_launch` 集成测试覆盖目录保存、编辑、去重、20 项上限、权限、无效路径，以及 `/bin/sh` 和 `/bin/zsh` 下中文、空格、引号和 shell 元字符的实际启动。`scripts/validate-cli-launch.mjs` 使用独立测试应用与隔离 CLI，操作真实 React WebView，再确认系统终端启动的实际工作目录和历史文件。运行脚本前构建 `desktop-validation` feature 的验证包；默认使用 `src-tauri/target/release/bundle/macos/AgentUpdate Validation.app`，也支持 `CARGO_TARGET_DIR` 或 `AGENTUPDATE_LAUNCH_VALIDATION_BINARY`。
 
 验证材料见 `docs/evidence/age-24-cli-launch.json`。该功能当前面向 macOS；物理 Intel 设备验证留待后续。
+
+发布验证状态（v0.2.3）：默认测试集与 Deepseek 默认/自定义 profile 参数执行测试通过，本机 dsh --profile web --help 正常退出。新增完整 profile 界面测试在 Mac 锁屏期间超时，未记为通过；最初的目录选择与 Terminal 启动验收通过记录保留在证据中的 baselineBeforeDeepseekProfileChange。

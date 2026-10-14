@@ -6,6 +6,11 @@ async function denied(command: string, args?: Record<string, unknown>) {
 }
 
 export async function validateCliLaunch(overview: AppOverview) {
+  try { await runCliLaunchValidation(overview); }
+  catch (e) { await invoke('finish_cli_launch_validation', {checks: {[String(e)]:false}}); }
+}
+
+async function runCliLaunchValidation(overview: AppOverview) {
   const card = () => document.querySelector('[data-agent="codex"]')!;
   await readyButton('打开', card);
   const command = card().querySelector('.instance > .path')!.textContent!;
@@ -51,6 +56,7 @@ export async function validateCliLaunch(overview: AppOverview) {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, profile);
     field.dispatchEvent(new Event('input', {bubbles:true}));
     await new Promise(resolve => setTimeout(resolve, 50));
+    if (!dialog().querySelector('form')!.checkValidity()) throw new Error('Deepseek form rejected a valid profile');
     clickButton('在此目录打开 CLI', dialog());
     await until(() => !dialog() || !!dialog().querySelector('[role="alert"]'), 45000);
     if (dialog()) throw new Error(dialog().textContent!);

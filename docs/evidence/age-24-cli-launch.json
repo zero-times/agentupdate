@@ -1,18 +1,39 @@
 {
-  "checkedAt": "2026-10-14T05:52:46.862Z",
+  "checkedAt": "2026-10-14T06:03:40.056Z",
   "status": "failed",
   "limitations": [
     "Native Apple Silicon macOS; physical Intel not tested. Starts an isolated fixture CLI, not a live Agent."
   ],
   "error": "CLI launch WebView timed out: ",
-  "followup": {
-    "deepseekProfileRequired": true,
-    "defaultProfile": "web",
-    "backendRegression": "passed (default and custom profiles, invalid names, other CLI rejection)",
-    "installedDshWebHelp": {
-      "exitCode": 0,
-      "missingProfileError": false
+  "baselineBeforeDeepseekProfileChange": {
+    "checkedAt": "2026-10-14T05:42:28.278Z",
+    "status": "passed",
+    "limitations": [
+      "Native Apple Silicon macOS; physical Intel not tested. Starts an isolated fixture CLI, not a live Agent."
+    ],
+    "result": {
+      "architecture": "aarch64",
+      "checks": {
+        "addProjectWorks": true,
+        "arbitraryCommandDenied": true,
+        "arbitraryFileDenied": true,
+        "domainCall": true,
+        "editReplacesPath": true,
+        "invalidInstanceDenied": true,
+        "invalidProjectShowsError": true,
+        "navigationWorks": true,
+        "recentProjectsPersist": true,
+        "terminalRequestCompleted": true
+      }
     },
-    "nativeUi": "Timed out while Mac was locked; awaiting unlock for repeat verification"
+    "nativeTerminalCwdExact": true,
+    "noShellInjection": true
+  },
+  "releaseVerification": {
+    "version": "0.2.3",
+    "defaultTestSuite": "passed",
+    "deepseekDefaultAndCustomArguments": "passed",
+    "installedDshWebHelpExitCode": 0,
+    "nativeProfileUi": "Timed out while Mac was locked; not claimed as passed"
   }
 }
