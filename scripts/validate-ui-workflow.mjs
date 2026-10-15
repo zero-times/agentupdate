@@ -1,6 +1,6 @@
-import {spawn} from 'node:child_process';import {mkdir,mkdtemp,writeFile,readFile,rm,symlink,readdir,stat} from 'node:fs/promises';import {createHash,randomBytes} from 'node:crypto';import {createRequire} from 'node:module';import path from 'node:path';import os from 'node:os';import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';import {mkdir,mkdtemp,writeFile,readFile,rm,symlink,readdir,stat,realpath} from 'node:fs/promises';import {createHash,randomBytes} from 'node:crypto';import {createRequire} from 'node:module';import path from 'node:path';import os from 'node:os';import assert from 'node:assert/strict';
 const repo=path.resolve('.'),arch=process.argv[2]??'arm64';
-const root=await mkdtemp(path.join(os.tmpdir(),`agentupdate-ui-${arch}-`));
+const root=await realpath(await mkdtemp(path.join(os.tmpdir(),`agentupdate-ui-${arch}-`)));
 const node=arch==='x86_64'?path.join(repo,'.validation/node-x64/node-v22.20.0-darwin-x64/bin/node'):process.execPath;
 const npm=arch==='x86_64'?path.join(repo,'.validation/node-x64/node-v22.20.0-darwin-x64/lib/node_modules/npm/bin/npm-cli.js'):(await import('node:child_process')).execFileSync('which',['npm'],{encoding:'utf8'}).trim();
 const cache=path.join(repo,'.validation/agent-npm-cache');
@@ -48,6 +48,6 @@ try{
  assert.equal(await readFile(path.join(root,'.codex/config.toml'),'utf8'),'model = "fixture"\n');assert.equal(await readFile(path.join(root,'.gemini/settings.json'),'utf8'),'{"fixture":true}\n');
  assert.deepEqual(await tree(oldApp),oldAppTree);assert.equal(await readFile(claudeConfig,'utf8'),'{"fixture":true}\n');
  evidence.desktopFixtureOriginalExact=true;evidence.desktopTransferBytes=appBytes.length;
- evidence.result=result;evidence.originalPackageTreesExact=true;evidence.status='passed';console.log(`PASS real React UI directly updates both tools with progress, hides current upgrades, installs/restores signed desktop fixture, exports and checks retention/release (${arch})`);
+ evidence.result=result;evidence.originalPackageTreesExact=true;evidence.status='passed';console.log(`PASS real React UI directly updates both tools with progress, hides current upgrades, rejects ad-hoc desktop fixture without changing original, exports and checks retention/release (${arch})`);
 }catch(error){evidence.status='failed';evidence.error=error.message;throw error;}
 finally{await writeFile(path.join(repo,`docs/evidence/v${JSON.parse(await readFile(path.join(repo,'package.json'),'utf8')).version}-ui-${arch}.json`),JSON.stringify(evidence,null,2)+'\n');await rm(root,{recursive:true,force:true});}

@@ -331,6 +331,126 @@ pub fn validate_source(i: &Installation, target: &AvailableVersion) -> Result<()
     }
     Ok(())
 }
+// Refresh API metadata without upgrading Homebrew itself or another package. The
+// installation uses this cache with auto-update disabled, then verifies the binary.
+fn homebrew_environment(ctx: &super::npm::Context, brew: &Path) -> Vec<(String, String)> {
+    let mut env = vec![
+        ("HOME".into(), ctx.home.display().to_string()),
+        (
+            "PATH".into(),
+            format!(
+                "{}:/usr/bin:/bin:/usr/sbin:/sbin",
+                brew.parent().unwrap().display()
+            ),
+        ),
+        ("HOMEBREW_NO_AUTO_UPDATE".into(), "1".into()),
+        ("HOMEBREW_NO_INSTALL_CLEANUP".into(), "1".into()),
+        ("HOMEBREW_NO_ANALYTICS".into(), "1".into()),
+        ("NONINTERACTIVE".into(), "1".into()),
+    ];
+    if let Some(proxy) = crate::platform::network::proxy() {
+        env.push(("HTTPS_PROXY".into(), proxy));
+    }
+    env
+}
+
+pub fn check_homebrew_target(
+    tx: &UpdateTransaction,
+    ctx: &super::npm::Context,
+    refresh: bool,
+) -> Result<(), AppError> {
+    let i = &tx.installation;
+    if i.source != "homebrew" {
+        return Ok(());
+    }
+    validate_paths(i)?;
+    let brew = i.prefix.as_ref().unwrap().join("bin/brew");
+    if ctx.npm != brew {
+        return Err(AppError::new("BREW_PATH", "Homebrew 路径与实例不匹配。"));
+    }
+    let env = homebrew_environment(ctx, &brew);
+    if refresh {
+        let mut refresh_env = env.clone();
+        refresh_env.push(("HOMEBREW_FORCE_API_AUTO_UPDATE".into(), "1".into()));
+        refresh_env.push(("HOMEBREW_API_AUTO_UPDATE_SECS".into(), "0".into()));
+        process::run(
+            &brew,
+            &[
+                "upgrade".into(),
+                "--cask".into(),
+                "--dry-run".into(),
+                cask_token(i.agent_id).into(),
+            ],
+            i.prefix.as_ref().unwrap(),
+            &refresh_env,
+            Duration::from_secs(180),
+            2 * 1024 * 1024,
+        )
+        .map_err(|_| {
+            AppError::new(
+                "BREW_REFRESH",
+                "Homebrew 版本目录刷新失败，安装未修改；请检查网络后重试。",
+            )
+        })?;
+    }
+    let output = process::run(
+        &brew,
+        &[
+            "info".into(),
+            "--cask".into(),
+            "--json=v2".into(),
+            cask_token(i.agent_id).into(),
+        ],
+        i.prefix.as_ref().unwrap(),
+        &env,
+        Duration::from_secs(30),
+        2 * 1024 * 1024,
+    )
+    .map_err(|_| AppError::new("BREW_CATALOG", "无法读取 Homebrew 版本目录，安装未修改。"))?;
+    validate_homebrew_target(i, &tx.target, &output)
+}
+
+fn validate_homebrew_target(
+    i: &Installation,
+    target: &AvailableVersion,
+    output: &str,
+) -> Result<(), AppError> {
+    let error = || {
+        AppError::new(
+            "BREW_CATALOG_CHANGED",
+            "Homebrew 目录与目标版本不一致，安装未修改；请重新检测更新后重试。",
+        )
+    };
+    let value: serde_json::Value = serde_json::from_str(output).map_err(|_| error())?;
+    let casks = value["casks"].as_array().ok_or_else(error)?;
+    if casks.len() != 1 {
+        return Err(error());
+    }
+    // `brew info` expands the official target variable to the local prefix.
+    // Normalize only this instance's exact command path; other targets stay invalid.
+    let mut cask = casks[0].clone();
+    if let Some(artifacts) = cask["artifacts"].as_array_mut() {
+        for artifact in artifacts {
+            if artifact["target"].as_str() == i.command_path.to_str() {
+                artifact["target"] = format!("$HOMEBREW_PREFIX/bin/{}", i.agent_id.key()).into();
+            }
+        }
+    }
+    let catalog = if i.agent_id == AgentId::Codex {
+        codex_cask(&cask, &i.architecture)?
+    } else {
+        from_cask(&cask, &i.architecture)?
+    };
+    let expected = catalog.versions.first().ok_or_else(error)?;
+    if expected.version != target.version
+        || expected.tarball != target.tarball
+        || expected.integrity != target.integrity
+    {
+        return Err(error());
+    }
+    Ok(())
+}
+
 pub fn preflight(i: &Installation, ctx: &super::npm::Context) -> Result<(), AppError> {
     validate_paths(i)?;
     super::npm::check_running(i)?;
@@ -407,23 +527,7 @@ pub fn install(
         if ctx.npm != brew {
             return Err(AppError::new("BREW_PATH", "Homebrew 路径与实例不匹配。"));
         }
-        let mut env = vec![
-            ("HOME".into(), ctx.home.display().to_string()),
-            (
-                "PATH".into(),
-                format!(
-                    "{}:/usr/bin:/bin:/usr/sbin:/sbin",
-                    brew.parent().unwrap().display()
-                ),
-            ),
-            ("HOMEBREW_NO_AUTO_UPDATE".into(), "1".into()),
-            ("HOMEBREW_NO_INSTALL_CLEANUP".into(), "1".into()),
-            ("HOMEBREW_NO_ANALYTICS".into(), "1".into()),
-            ("NONINTERACTIVE".into(), "1".into()),
-        ];
-        if let Some(proxy) = crate::platform::network::proxy() {
-            env.push(("HTTPS_PROXY".into(), proxy));
-        }
+        let env = homebrew_environment(ctx, &brew);
         process::run(
             &brew,
             &[
@@ -618,4 +722,80 @@ pub fn codex_cask(value: &serde_json::Value, arch: &str) -> Result<VersionCatalo
             ),
         }],
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn homebrew_fixture() -> (Installation, serde_json::Value, AvailableVersion) {
+        let installation = Installation {
+            id: "claude-brew-fixture".into(),
+            agent_id: AgentId::Claude,
+            command_path: "/opt/homebrew/bin/claude".into(),
+            resolved_command: "/opt/homebrew/Caskroom/claude-code/2.1.287/claude".into(),
+            package_root: Some("/opt/homebrew/Caskroom/claude-code".into()),
+            prefix: Some("/opt/homebrew".into()),
+            node_path: None,
+            version: Some("2.1.287".into()),
+            architecture: "arm64".into(),
+            source: "homebrew".into(),
+            supported: true,
+            version_verified: true,
+            reason: None,
+        };
+        let cask = serde_json::json!({
+            "token": "claude-code", "version": "2.1.292",
+            "url": "https://downloads.claude.ai/claude-code-releases/2.1.292/darwin-arm64/claude",
+            "sha256": "a".repeat(64), "artifacts": [{"binary": ["claude"]}]
+        });
+        let target = from_cask(&cask, "arm64").unwrap().versions.remove(0);
+        (installation, serde_json::json!({"casks": [cask]}), target)
+    }
+
+    #[test]
+    fn homebrew_stale_noop_is_rejected_before_installing() {
+        let (i, mut metadata, target) = homebrew_fixture();
+        metadata["casks"][0]["version"] = "2.1.287".into();
+        metadata["casks"][0]["url"] =
+            "https://downloads.claude.ai/claude-code-releases/2.1.287/darwin-arm64/claude".into();
+        let error = validate_homebrew_target(&i, &target, &metadata.to_string()).unwrap_err();
+        assert_eq!(error.code, "BREW_CATALOG_CHANGED");
+        // The refreshed API now agrees with the exact target and permits installation.
+        let (_, refreshed, _) = homebrew_fixture();
+        validate_homebrew_target(&i, &target, &refreshed.to_string()).unwrap();
+    }
+
+    #[test]
+    fn homebrew_info_expanded_target_must_match_the_discovered_command() {
+        let (i, mut metadata, target) = homebrew_fixture();
+        metadata["casks"][0]["artifacts"][0]["target"] = "/opt/homebrew/bin/claude".into();
+        validate_homebrew_target(&i, &target, &metadata.to_string()).unwrap();
+        metadata["casks"][0]["artifacts"][0]["target"] = "/usr/local/bin/claude".into();
+        assert!(validate_homebrew_target(&i, &target, &metadata.to_string()).is_err());
+    }
+
+    #[test]
+    fn homebrew_changed_artifact_or_lifecycle_is_rejected() {
+        let (i, metadata, target) = homebrew_fixture();
+        let mut changed = metadata.clone();
+        changed["casks"][0]["sha256"] = "b".repeat(64).into();
+        assert_eq!(
+            validate_homebrew_target(&i, &target, &changed.to_string())
+                .unwrap_err()
+                .code,
+            "BREW_CATALOG_CHANGED"
+        );
+        changed = metadata.clone();
+        changed["casks"][0]["artifacts"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({"preflight": "unexpected script"}));
+        assert!(validate_homebrew_target(&i, &target, &changed.to_string()).is_err());
+        assert!(validate_homebrew_target(&i, &target, "{invalid").is_err());
+        assert!(validate_homebrew_target(&i, &target, "{\"casks\":[]}").is_err());
+        let mut advanced = target.clone();
+        advanced.version = "2.1.293".into();
+        assert!(validate_homebrew_target(&i, &advanced, &metadata.to_string()).is_err());
+    }
 }

@@ -140,6 +140,18 @@ export async function validateWorkflow(_overview:AppOverview){
  const backupProtected=Array.from(document.querySelectorAll<HTMLButtonElement>('dialog[open] button')).some(b=>b.textContent==='清理此恢复点'&&b.disabled);clickButton('关闭',document.querySelector('dialog[open]')!);
  await until(()=>document.querySelector('.release-panel')?.textContent?.includes('发现新版本')??false);
  const releasePrompt=document.querySelector('.release-panel')?.textContent?.includes('打开安装包下载')??false;
+ await until(()=>!!document.querySelector('.update-banner'));
+ const releaseBadge=document.querySelector('[data-nav="release"] .update-badge')?.textContent==='新版本';
+ const releaseNav=document.querySelector<HTMLElement>('[data-nav="release"]')!;
+ const releaseNavFits=releaseNav.scrollWidth<=releaseNav.clientWidth;
+ const releaseLabel=document.querySelector('[data-nav="release"]')?.textContent?.includes('版本更新')??false;
+ const releaseBanner=document.querySelector('.update-banner')?.textContent?.includes('v0.10.0')??false;
+ clickButton('查看版本更新',document.querySelector('.update-banner')!);
+ await until(()=>document.querySelector('[data-nav="release"]')?.getAttribute('aria-current')==='page');
+ const releaseBannerNavigates=!document.querySelector('.update-banner')&&document.querySelector('h1')?.textContent==='版本更新';
+ document.querySelector<HTMLButtonElement>('[data-nav="cli"]')!.click();
+ await until(()=>!!document.querySelector('.update-banner'));
+ const updateReminderPersists=!!document.querySelector('[data-nav="release"] .update-badge');
  document.querySelector<HTMLButtonElement>('[data-nav="apps"]')!.click();
  await until(()=>document.querySelector('[data-desktop-product="claude"]')?.textContent?.includes('发现新版本')??false);
  const appCard=document.querySelector('[data-desktop-product="claude"]')!;
@@ -147,17 +159,16 @@ export async function validateWorkflow(_overview:AppOverview){
  const appObserver=new MutationObserver(()=>{if(document.querySelector('dialog[open]'))appConfirm=true;for(const p of appCard.querySelectorAll('[data-progress-phase]'))appPhases.add(p.getAttribute('data-progress-phase')!);});
  appObserver.observe(document.body,{subtree:true,childList:true,attributes:true});
  clickButton('下载并升级',appCard);
- await until(()=>document.querySelector('[aria-label="应用待处理安装"]')?.textContent?.includes('安装完成')??false);
- await until(()=>appCard.textContent?.includes('与公开稳定版一致')??false);
- const desktopDirectInstall=!appConfirm&&!appCard.querySelector('.bundle-install');
- const desktopProgress=appPhases.has('downloading')&&appPhases.has('staging')&&appPhases.has('installing');
+ // This fixture is ad-hoc signed and must fail the production vendor check.
+ // Successful desktop installation requires an actual vendor-signed artifact.
+ await until(()=>appCard.textContent?.includes('APP_SIGNATURE')??false,60000);
+ const desktopDirectAttempt=!appConfirm;
+ const desktopProgress=appPhases.has('downloading')&&appPhases.has('staging')&&!appPhases.has('installing');
+ const desktopUnsignedFixtureRejected=appCard.textContent?.includes('操作未完成')??false;
+ const desktopOriginalPreserved=appCard.textContent?.includes('1.0.0')&&!(await appInstalls()).some(r=>r.product==='claude');
  appObserver.disconnect();
- document.querySelector<HTMLElement>('[aria-label="应用待处理安装"] .recovery-history > summary')!.click();
- await readyButton('恢复旧应用',()=>document.querySelector('[aria-label="应用待处理安装"]')!);clickButton('恢复旧应用',document.querySelector('[aria-label="应用待处理安装"]')!);
- await until(()=>appCard.textContent?.includes('发现新版本')??false);
- const desktopRestored=(await appInstalls()).some(r=>r.product==='claude'&&r.state==='restored');
  document.querySelector<HTMLButtonElement>('[data-nav="cli"]')!.click();
- await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,noInstallConfirmation,progressObserved,updatedButtonsHidden,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt,desktopDirectInstall,desktopProgress,desktopRestored}});
+ await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,noInstallConfirmation,progressObserved,updatedButtonsHidden,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt,releaseBadge,releaseNavFits,releaseLabel,releaseBanner,releaseBannerNavigates,updateReminderPersists,desktopDirectAttempt,desktopProgress,desktopUnsignedFixtureRejected,desktopOriginalPreserved}});
 }
 
 async function validateNavigation() {

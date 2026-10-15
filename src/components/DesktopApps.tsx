@@ -27,8 +27,8 @@ export function DesktopApps() {
     <p className="muted">检测本机应用，与官方公开渠道比较。可在这里下载、校验、备份并安装；升级前请退出目标应用。</p>
     {error&&<p className="error" role="alert">{error}</p>}
     {!checks.length&&<p className="empty">{busy?'正在读取应用版本与公开渠道…':'尚未检查桌面应用。'}</p>}
-    <div className="tool-grid">{checks.map(check=><article className="tool-card desktop-app-card" key={check.product} data-desktop-product={check.product}>
-      <header><span className={`agent-symbol ${check.product}`} aria-hidden="true">{check.product==='codex'?'>_':check.product==='claude'?'✳':'◎'}</span><h2>{check.name}</h2><button className="detect-button" disabled={busy||!!installing} onClick={()=>void refresh(check.product)}>{busy&&check.state==='not_checked'?'检测中…':'检测更新'}</button></header><p className="muted" role="status">{labels[check.state]??check.state}</p>
+    <div className="tool-grid">{checks.map(check=><article className={`tool-card desktop-app-card ${check.state==='update_available'?'has-update':''}`} key={check.product} data-desktop-product={check.product}>
+      <header><span className={`agent-symbol ${check.product}`} aria-hidden="true">{check.product==='codex'?'>_':check.product==='claude'?'✳':'◎'}</span><h2>{check.name}</h2><button className="detect-button" disabled={busy||!!installing} onClick={()=>void refresh(check.product)}>{busy&&check.state==='not_checked'?'检测中…':'检测更新'}</button></header><p className={check.state==='update_available'?'version-alert':'muted'} role="status">{labels[check.state]??check.state}</p>
       {!check.installed.length&&<p className="empty">未发现独立应用安装。</p>}
       {check.installed.map(app=><div className="instance" key={app.path}><strong>本机 {app.version??'版本无法读取'}</strong><span className="muted"> · {labels[app.state]??app.state}</span><p className="path">{app.path}</p></div>)}
       <p>公开稳定版本：<strong>{check.latestVersion??'本次未获取'}</strong></p>

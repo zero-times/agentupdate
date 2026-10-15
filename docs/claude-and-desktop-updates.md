@@ -33,3 +33,7 @@ Claude 配置备份范围：`~/.claude/settings.json`、`settings.local.json`、
 各产品独立比较数字版本，显示当前版本、公开版本、检查时间、未安装/可更新/渠道版本一致/本机较新/无法比较/检查失败。失败不显示最新版；目录来源在界面说明，公开目录不保证账户或分批发布资格。Intel 不推荐只含 arm64 的下载链接。按钮只打开受限的官方入口或经来源与架构核验的制品 URL，不自动替换运行中的应用。
 
 网络请求读取环境或 macOS 系统 HTTPS 代理，保持超时和响应上限；检测不上传本机配置和凭据。正式源码及新增命令仍不提供任意进程或文件访问接口。
+
+## v0.2.5 Homebrew 目录过期修复
+
+真实失败记录中，应用查询的公开 cask 为 2.1.292，Homebrew 缓存仍为 2.1.287；禁用自动更新后 `brew upgrade` 返回成功但未升级，最终报 `ARTIFACT_INTEGRITY`。现在使用仅针对目标 cask 的 `upgrade --cask --dry-run` 刷新 API 元数据（`HOMEBREW_FORCE_API_AUTO_UPDATE=1`、`HOMEBREW_API_AUTO_UPDATE_SECS=0`），保持 Homebrew 自身自动更新关闭。随后读取本地 cask，核对目标版本、架构对应 URL、SHA-256 与受支持的安装动作。安装前再次核对，元数据不一致时以 `BREW_CATALOG_CHANGED` 在准备阶段停止。刷新失败提示 `BREW_REFRESH`，原安装不变。安装仍使用原有备份、精确文件哈希与实际版本验证；Codex Homebrew 使用同一路径。先前已进入待恢复的任务应先回滚，再重新检测。

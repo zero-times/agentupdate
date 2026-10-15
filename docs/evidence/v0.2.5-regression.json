@@ -1,0 +1,29 @@
+{
+  "version": "0.2.5",
+  "checkedAt": "2026-10-15T01:39:59.599953+00:00",
+  "rust": {
+    "passedExecutions": 67,
+    "failed": 0,
+    "ignored": 19,
+    "command": "cargo test --manifest-path src-tauri/Cargo.toml --release --locked"
+  },
+  "homebrew": {
+    "liveReadOnlyPreparation": "passed",
+    "originalVersion": "2.1.287",
+    "plannedVersion": "2.1.292",
+    "initialCachedVersion": "2.1.287",
+    "refreshedCachedVersion": "2.1.292",
+    "binaryAndLaunchLinkUnchanged": true,
+    "regressions": [
+      "Reject stale catalog before installation",
+      "Accept refreshed exact version/URL/hash",
+      "Reject changed digest, target version and lifecycle scripts",
+      "Accept only the discovered prefix when brew info expands binary targets"
+    ]
+  },
+  "limitations": [
+    "Live Homebrew preparation only; daily Claude installation was not upgraded.",
+    "Ad-hoc signing; no Developer ID or Apple notarization.",
+    "Intel GUI validation uses Rosetta; physical Intel and clean macOS 15 untested."
+  ]
+}

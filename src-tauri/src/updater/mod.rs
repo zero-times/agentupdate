@@ -55,6 +55,7 @@ fn execute_item_inner(
     let preparation = (|| {
         if native::handles(&transaction.installation) {
             native::preflight(&transaction.installation, context)?;
+            native::check_homebrew_target(&transaction, context, true)?;
         } else {
             npm::preflight(&transaction.installation, context)?;
         }
@@ -75,6 +76,9 @@ fn execute_item_inner(
             native::preflight(&transaction.installation, context)?;
         } else {
             npm::preflight(&transaction.installation, context)?;
+        }
+        if native::handles(&transaction.installation) {
+            native::check_homebrew_target(&transaction, context, false)?;
         }
         let (directory, manifest) = backup::load(store, &store.transaction(id)?)?;
         let original_package = backup::snapshot::scan(

@@ -35,11 +35,22 @@ input[type=checkbox] { accent-color: var(--primary); width: 16px; height: 16px; 
 .brand-caption { font-size: 10px; color: #9eafb8; letter-spacing: 1px; }
 .nav-caption { color: #93a5af; font-size: 10px; letter-spacing: 2px; margin: 0 14px 10px; }
 .sidebar nav { display: grid; gap: 6px; }
-.sidebar nav button { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; padding: 12px; border: 1px solid transparent; background: transparent; color: #b6c3cb; font-size: 12px; }
+.sidebar nav button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 12px; border: 1px solid transparent; background: transparent; color: #b6c3cb; font-size: 12px; }
+.sidebar nav button > svg { flex-shrink: 0; }
+.sidebar nav button > span { white-space: nowrap; }
 .sidebar nav button:hover { background: #2a3b46; border-color: transparent; }
 .sidebar nav button[aria-current=page] { background: #344651; border-color: #425660; color: #fff; box-shadow: inset 3px 0 #e9a47f; }
 .sidebar nav button[aria-current=page] svg { color: #f0b492; }
-.update-dot { width: 6px; height: 6px; border-radius: 50%; background: #f0b492; margin-left: auto; }
+.update-badge { margin-left: auto; flex-shrink: 0; padding: 2px 4px; border-radius: 5px; background: #f0b492; color: #402515; font-size: 9px; font-weight: 700; }
+.update-banner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: -10px 0 24px; padding: 16px; border: 1px solid var(--accent); border-left-width: 4px; border-radius: 9px; background: var(--notice-bg); color: var(--notice-ink); }
+.update-banner-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 23px; flex-shrink: 0; }
+.update-banner > div { flex: 1; min-width: 170px; }
+.update-banner strong { font-size: 14px; }
+.update-banner p { margin: 2px 0 0; font-size: 11px; }
+.version-alert { display: inline-block; padding: 5px 9px; border-radius: 6px; background: var(--notice-bg); color: var(--notice-ink); font-size: 11px; font-weight: 600; border: 1px solid var(--accent); }
+.app-version h2 .version-alert { margin-left: 8px; }
+.has-update { border-color: var(--accent); }
+.instance.has-update { box-shadow: inset 3px 0 var(--accent); }
 .sidebar-bottom { margin-top: auto; }
 .device-info { display: flex; align-items: center; gap: 7px; padding: 19px 9px 4px; font-size: 10px; color: #c8d4da; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #e0b477; }

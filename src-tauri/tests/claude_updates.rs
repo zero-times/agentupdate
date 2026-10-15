@@ -268,3 +268,44 @@ fn actual_native_upgrade_and_rollback() {
         fs::write(path,serde_json::to_vec_pretty(&serde_json::json!({"status":"passed","original":"2.1.286","target":"2.1.287","stage":restored.stage,"architecture":"arm64","execution":"native Apple Silicon","installationTreeExact":true,"originalMissingConfigDirectoryRestored":true,"isolation":"Temporary HOME; actual official binaries; no daily installation or credential changes"})).unwrap()).unwrap();
     }
 }
+
+#[test]
+#[ignore = "Read-only live Homebrew API refresh; requires a real standard Claude cask installation"]
+fn live_homebrew_preparation_refreshes_catalog_without_changing_installation() {
+    let f = fixture();
+    let home = PathBuf::from(std::env::var_os("HOME").unwrap());
+    let command = PathBuf::from(std::env::var_os("AGENTUPDATE_LIVE_CLAUDE_COMMAND").unwrap());
+    let installation = discover(
+        &DiscoveryContext {
+            home: home.clone(),
+            directories: vec![command.parent().unwrap().into()],
+        },
+        &[],
+    )
+    .unwrap()
+    .instances
+    .into_iter()
+    .find(|i| i.agent_id == AgentId::Claude && i.command_path == command)
+    .unwrap();
+    assert!(installation.supported);
+    assert_eq!(installation.source, "homebrew");
+    let original_link = fs::read_link(&command).unwrap();
+    let original_hash = Sha256::digest(fs::read(&installation.resolved_command).unwrap());
+    let target = native::catalog(&installation).unwrap().versions.remove(0);
+    let mut store = Store::open(&f.root.join("app-data")).unwrap();
+    let plan = store
+        .create_plan(vec![PlannedItem {
+            installation: installation.clone(),
+            target,
+        }])
+        .unwrap();
+    let tx = &plan.transactions[0];
+    let ctx = native::context(&installation).unwrap();
+    native::check_homebrew_target(tx, &ctx, true).unwrap();
+    native::check_homebrew_target(tx, &ctx, false).unwrap();
+    assert_eq!(fs::read_link(&command).unwrap(), original_link);
+    assert_eq!(
+        Sha256::digest(fs::read(&installation.resolved_command).unwrap()),
+        original_hash
+    );
+}
