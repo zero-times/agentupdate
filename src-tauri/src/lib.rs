@@ -813,9 +813,16 @@ mod validation {
         pub private_log_exported: bool,
         pub backup_protected: bool,
         pub release_prompt: bool,
-        pub desktop_direct_install: bool,
+        pub release_badge: bool,
+        pub release_nav_fits: bool,
+        pub release_label: bool,
+        pub release_banner: bool,
+        pub release_banner_navigates: bool,
+        pub update_reminder_persists: bool,
+        pub desktop_direct_attempt: bool,
         pub desktop_progress: bool,
-        pub desktop_restored: bool,
+        pub desktop_unsigned_fixture_rejected: bool,
+        pub desktop_original_preserved: bool,
     }
     #[tauri::command]
     pub fn finish_workflow_validation(
