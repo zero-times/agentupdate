@@ -18,7 +18,9 @@ export function useOperationProgress() {
 }
 const mb=(bytes:number)=>(bytes/1024/1024).toFixed(1)+' MB';
 export function OperationProgress({progress,label='安装进度'}:{progress:Progress;label?:string}) {
- if(progress.phase==='succeeded') return null;
+ if(progress.phase==='succeeded') return <div className="operation-progress phase-succeeded" data-progress-target={progress.target} data-progress-phase={progress.phase}>
+  <div className="progress-heading"><span role="status"><svg className="check-draw" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 12.5 9.5 18 20 6.5"/></svg>{labels.succeeded}</span></div>
+ </div>;
  const downloading=progress.phase==='downloading';
  const measured=downloading&&!!progress.totalBytes;
  const stopped=['failed','cancelled'].includes(progress.phase);

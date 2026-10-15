@@ -198,3 +198,75 @@ dialog p { font-size: 12px; line-height: 1.9; }
 .recovery-history[open] > summary { margin-bottom: 12px; }
 
 .transaction:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ---- Loading motion (AGE-26): spinners, skeletons, transitions ---- */
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin .7s linear infinite;
+  vertical-align: -2px;
+}
+button .spinner { margin-right: 7px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.skeleton-block { display: grid; gap: 10px; padding: 8px 0; }
+.skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(100deg, var(--soft) 40%, var(--line) 50%, var(--soft) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skeleton-card { padding: 20px 18px; display: grid; gap: 12px; align-content: start; }
+.skeleton-title { width: 230px; height: 26px; margin-bottom: 28px; }
+.startup-loading { max-width: 720px; }
+
+/* View switch transitions: replay each time a section is unhidden. */
+main > section[data-view] { animation: view-enter .28s ease; }
+@keyframes view-enter { from { opacity: 0; transform: translateY(10px); } }
+
+/* Status dot breathes while the backend is not connected yet. */
+.status-dot:not(.connected) { animation: dot-pulse 1.6s ease-in-out infinite; }
+@keyframes dot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* Tool cards rise in with a stagger on first paint. */
+.tool-grid > .tool-card { animation: card-enter .38s cubic-bezier(.2,.7,.3,1) backwards; }
+.tool-grid > .tool-card:nth-child(2) { animation-delay: .06s; }
+.tool-grid > .tool-card:nth-child(3) { animation-delay: .12s; }
+.tool-grid > .tool-card:nth-child(4) { animation-delay: .18s; }
+@keyframes card-enter { from { opacity: 0; transform: translateY(14px) scale(.99); } }
+
+/* Empty states get a quiet dotted-circle mark instead of bare text. */
+.empty::before {
+  content: '◌';
+  display: block;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--line);
+  margin-bottom: 10px;
+}
+
+/* Determinate progress bars get a travelling highlight. */
+.operation-progress progress:not(:indeterminate)::-webkit-progress-value {
+  background-image: linear-gradient(100deg, var(--primary) 30%, #ffffff66 50%, var(--primary) 70%);
+  background-size: 200% 100%;
+  animation: progress-shimmer 1.6s linear infinite;
+}
+@keyframes progress-shimmer { to { background-position: -200% 0; } }
+
+/* Success no longer vanishes: a compact row with a drawn check. */
+.check-draw { color: #48836b; vertical-align: -2px; margin-right: 6px; }
+.check-draw path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: check-draw .5s ease forwards .1s; }
+@keyframes check-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-color-scheme: dark) { .check-draw { color: #a8cdbc; } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner, .skeleton-line, .status-dot:not(.connected),
+  .operation-progress progress:not(:indeterminate)::-webkit-progress-value,
+  .check-draw path { animation: none !important; }
+  main > section[data-view], .tool-grid > .tool-card { animation: none !important; }
+}

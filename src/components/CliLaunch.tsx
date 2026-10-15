@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { cliProjects, errorMessage, openCli, saveCliProject, type Installation } from '../api/desktop';
+import { Spinner, Skeleton } from './Spinner';
 
 export function CliLaunch({installation, onClose}: {installation: Installation; onClose: () => void}) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -37,7 +38,7 @@ export function CliLaunch({installation, onClose}: {installation: Installation; 
     <h2>打开 {installation.agentId === 'deepseek' ? 'Deepseek Harness' : installation.agentId === 'claude' ? 'Claude Code CLI' : `${installation.agentId === 'codex' ? 'Codex' : 'Gemini'} CLI`}</h2>
     <p>选择项目目录，在系统终端中启动这个 CLI。</p>
     <p className="path">{installation.commandPath}</p>
-    {loading ? <p role="status">正在读取最近项目…</p> : <form onSubmit={e => {e.preventDefault(); void submit(true);}}>
+    {loading ? <Skeleton lines={4} label="正在读取最近项目"/> : <form onSubmit={e => {e.preventDefault(); void submit(true);}}>
       <label>最近项目<select value={selected} disabled={busy} onChange={e => {setSelected(e.target.value); setPath(e.target.value); setError(''); setNotice('');}}>
         <option value="">新增项目目录</option>
         {projects.map(project => <option key={project} value={project}>{project}</option>)}
@@ -54,7 +55,7 @@ export function CliLaunch({installation, onClose}: {installation: Installation; 
         <button type="button" disabled={busy} onClick={onClose}>取消</button>
         <button type="button" disabled={busy} onClick={() => {setSelected(''); setPath(''); setError(''); setNotice(''); dialog.current?.querySelector<HTMLInputElement>('input')?.focus();}}>新增目录</button>
         <button type="button" disabled={busy || !path} onClick={() => void submit(false)}>保存目录</button>
-        <button className="primary" disabled={busy || !path || (installation.agentId === 'deepseek' && !profile)} type="submit">{busy ? '正在处理…' : '在此目录打开 CLI'}</button>
+        <button className="primary" disabled={busy || !path || (installation.agentId === 'deepseek' && !profile)} type="submit">{busy ? <><Spinner size={12}/>正在处理…</> : '在此目录打开 CLI'}</button>
       </div>
     </form>}
     {loading && <div className="dialog-actions"><button onClick={onClose}>取消</button></div>}

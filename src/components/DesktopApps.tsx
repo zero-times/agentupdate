@@ -4,6 +4,7 @@ import { appInstalls, finishAppInstall, rollbackAppInstall, type AppInstall, che
 import {RecoveryHistory} from './RecoveryHistory';
 import {BundleInstall} from './BundleInstall';
 import {OperationProgress,useOperationProgress,initialProgress} from './OperationProgress';
+import {Spinner} from './Spinner';
 const labels: Record<string,string> = {not_installed:'未安装',update_available:'发现新版本',up_to_date:'与公开稳定版一致',local_newer:'本机版本较新',unknown_version:'版本无法比较',failed:'检查失败',not_checked:'尚未检查'};
 export function DesktopApps() {
   const [records,setRecords]=useState<AppInstall[]>([]);
@@ -26,9 +27,9 @@ export function DesktopApps() {
     <div className="section-heading"><div><p className="eyebrow">官方渠道 / 本机应用</p><h2>应用版本与更新检测</h2></div></div>
     <p className="muted">检测本机应用，与官方公开渠道比较。可在这里下载、校验、备份并安装；升级前请退出目标应用。</p>
     {error&&<p className="error" role="alert">{error}</p>}
-    {!checks.length&&<p className="empty">{busy?'正在读取应用版本与公开渠道…':'尚未检查桌面应用。'}</p>}
+    {!checks.length&&(busy?<div className="tool-grid" role="status" aria-label="正在读取应用版本与公开渠道">{[0,1,2].map(i=><div key={i} className="tool-card skeleton-card" aria-hidden="true"><span className="skeleton-line" style={{width:'42%'}}/><span className="skeleton-line"/><span className="skeleton-line" style={{width:'66%'}}/></div>)}</div>:<p className="empty">尚未检查桌面应用。</p>)}
     <div className="tool-grid">{checks.map(check=><article className={`tool-card desktop-app-card ${check.state==='update_available'?'has-update':''}`} key={check.product} data-desktop-product={check.product}>
-      <header><span className={`agent-symbol ${check.product}`} aria-hidden="true">{check.product==='codex'?'>_':check.product==='claude'?'✳':'◎'}</span><h2>{check.name}</h2><button className="detect-button" disabled={busy||!!installing} onClick={()=>void refresh(check.product)}>{busy&&check.state==='not_checked'?'检测中…':'检测更新'}</button></header><p className={check.state==='update_available'?'version-alert':'muted'} role="status">{labels[check.state]??check.state}</p>
+      <header><span className={`agent-symbol ${check.product}`} aria-hidden="true">{check.product==='codex'?'>_':check.product==='claude'?'✳':'◎'}</span><h2>{check.name}</h2><button className="detect-button" disabled={busy||!!installing} onClick={()=>void refresh(check.product)}>{busy&&check.state==='not_checked'?<><Spinner size={12}/>检测中…</>:'检测更新'}</button></header><p className={check.state==='update_available'?'version-alert':'muted'} role="status">{labels[check.state]??check.state}</p>
       {!check.installed.length&&<p className="empty">未发现独立应用安装。</p>}
       {check.installed.map(app=><div className="instance" key={app.path}><strong>本机 {app.version??'版本无法读取'}</strong><span className="muted"> · {labels[app.state]??app.state}</span><p className="path">{app.path}</p></div>)}
       <p>公开稳定版本：<strong>{check.latestVersion??'本次未获取'}</strong></p>

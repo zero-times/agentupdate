@@ -43,7 +43,16 @@ function App() {
       <header className="page-header"><div><h1>{page.title}</h1></div><button className="collapse-panel" aria-label="收起到菜单栏" title="收起到菜单栏" onClick={() => void hideMainWindow().catch(e => setError(errorMessage(e)))}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 4h14M12 20V8m-5 5 5-5 5 5"/></svg></button></header>
       {availableRelease && view !== 'release' && <div className="update-banner" role="status"><span className="update-banner-icon" aria-hidden="true">↑</span><div><strong>AgentUpdate v{availableRelease.version} 已发布</strong><p>新版本可用，查看更新内容并安装。</p></div><button className="primary" onClick={() => setView('release')}>查看版本更新</button></div>}
       {error && <div role="alert" className="error">{error}</div>}
-      {!overview && !error && <p className="empty" role="status">正在连接本机工作台…</p>}
+      {!overview && !error && <div className="startup-loading" role="status" aria-label="正在连接本机工作台">
+        <span className="skeleton-line skeleton-title" aria-hidden="true" />
+        <div className="tool-grid" aria-hidden="true">
+          {[0, 1, 2, 3].map(i => <div key={i} className="tool-card skeleton-card">
+            <span className="skeleton-line" style={{ width: '46%' }} />
+            <span className="skeleton-line" />
+            <span className="skeleton-line" style={{ width: '72%' }} />
+          </div>)}
+        </div>
+      </div>}
       {overview && <><section id="view-cli" data-view="cli" hidden={view !== 'cli'} aria-label="CLI 工具工作台"><Workspace/></section><section id="view-apps" data-view="apps" hidden={view !== 'apps'} aria-label="桌面应用工作台"><DesktopApps/></section><section id="view-release" data-view="release" hidden={view !== 'release'} aria-label="版本更新工作台"><AppRelease currentVersion={overview.appVersion} onUpdateAvailable={setAvailableRelease}/></section></>}
       {view === 'cli' && <footer><span>⌘ R 重新扫描</span></footer>}
     </main>
