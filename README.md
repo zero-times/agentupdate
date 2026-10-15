@@ -4,6 +4,8 @@ AgentUpdate 是一个桌面应用，用于集中管理本机 AI Agent 工具的�
 
 下载当前版本：[GitHub Releases](https://github.com/zero-times/agentupdate/releases/latest)。v0.2.3 提供 macOS 15+ 的 Apple Silicon / Intel 通用 DMG 和应用 ZIP，并附带 SHA256SUMS。安装包采用 ad-hoc 完整性签名，未完成 Developer ID 签名与 Apple 公证。
 
+v0.2.6 修复旧失败任务阻塞升级时的处理引导，以及恢复后旧提示未清除的问题；[更新说明](docs/releases/v0.2.6.md)。
+
 v0.2.5 强化了版本更新提醒，并修复 Claude Code CLI 因 Homebrew 本地目录过期导致的更新校验失败；[更新说明](docs/releases/v0.2.5.md)。
 
 v0.2.1 重新设计了工作台：侧栏分别进入 CLI 工具、桌面应用和版本更新，保留安装、升级、备份与恢复能力。可从 v0.2.0 通过“检查应用更新 → 下载更新并安装重启”测试在线升级；[新版界面与测试说明](docs/v0.2.1-ui.md)。

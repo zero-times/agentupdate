@@ -196,3 +196,5 @@ dialog p { font-size: 12px; line-height: 1.9; }
 .collapse-panel { display: inline-flex; align-items: center; justify-content: center; padding: 9px; border-radius: 9px; }
 .recovery-history > summary { padding: 12px 0; color: var(--muted); cursor: pointer; }
 .recovery-history[open] > summary { margin-bottom: 12px; }
+
+.transaction:focus { outline: 2px solid var(--accent); outline-offset: 3px; }

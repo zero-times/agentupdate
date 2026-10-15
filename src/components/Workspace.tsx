@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RecoveryHistory } from './RecoveryHistory';
+import { RecoveryNotice, blockingTransaction } from './RecoveryNotice';
 import { CliLaunch } from './CliLaunch';
 import {OperationProgress,useOperationProgress,initialProgress} from './OperationProgress';
 import { installCli, cliInstalls, rollbackCliInstall, type CliInstall, restoreDetails, exportTransaction, cleanupRestore, revealExport, type RestoreDetails, type ExportResult, inspectInterrupted, type RecoveryReport, cancelPlan, executePlan, createPlan, discoverAgents, errorMessage, listVersions, planHistory, previewRollback, rollbackUpdate, type AgentId, type DiscoveryReport, type Installation, type RollbackPreview, type Stage, type UpdatePlan, type UpdateTransaction, type VersionCatalog } from '../api/desktop';
@@ -62,7 +63,12 @@ export function Workspace() {
     finally {await refreshHistory().catch(e=>setError(errorMessage(e)));inFlight.current=false;setWorking('');}
   }
   const chosen = report?.instances.filter(i=>selected[i.id]&&i.supported) ?? [];
-  const eligible = chosen.filter(i=>(targets[i.id]??'latest')==='latest'?catalogs[i.id]?.state==='update_available':targets[i.id]!==i.version);
+  const eligible = chosen.filter(i=>!blockingTransaction(plans,i.id)&&((targets[i.id]??'latest')==='latest'?catalogs[i.id]?.state==='update_available':targets[i.id]!==i.version));
+  function showPendingTask(tx: UpdateTransaction) {
+    const row=document.getElementById(`transaction-${tx.id}`);
+    row?.scrollIntoView({block:'center'});
+    row?.focus({preventScroll:true});
+  }
   async function checkAgent(agent:AgentId) {
     if(inFlight.current)return;inFlight.current=true;setAgentBusy(v=>({...v,[agent]:true}));setError('');
     try {const found=await discoverAgents(extraPaths);setReport(found);await Promise.all(found.instances.filter(i=>i.agentId===agent&&i.supported).map(i=>versions(agent,agent==='deepseek'||!!pre[agent],i.id)));}
@@ -70,6 +76,8 @@ export function Workspace() {
   }
   async function updateInstances(instances:Installation[],latestOnly=false) {
     const first=instances[0];if(!first)return;
+    const blocked=instances.map(i=>blockingTransaction(plans,i.id)).find(Boolean);
+    if(blocked){showPendingTask(blocked);return;}
     await action('plan',async()=>{
       for(const i of instances)start(i.id);
       try {
@@ -87,11 +95,11 @@ export function Workspace() {
   }
   function toggle(i:Installation,checked:boolean) {setSelected(v=>({...v,[i.id]:checked}));if(checked&&!catalogs[i.id]&&!versionBusy[i.id]) void versions(i.agentId,!!pre[i.agentId],i.id);}
   const planCompleted = (plan: UpdatePlan) => ["finished","cancelled"].includes(plan.state)&&plan.transactions.every(tx=>["succeeded","restored","cancelled"].includes(tx.stage));
-  const renderTransaction = (planId: string, tx: UpdateTransaction) => <div className={`transaction stage-${tx.stage}`} key={tx.id}><div className="transaction-main"><strong>{names[tx.installation.agentId]}</strong><span className="version-pair">{tx.installation.version} <span aria-hidden="true">→</span> {tx.target.version}</span><span className="status" role="status">{stageNames[tx.stage]}</span></div><p className="path">{tx.installation.commandPath}</p>{executingPlan===planId&&progress[tx.installation.id]?<OperationProgress progress={progress[tx.installation.id]}/>:tx.stage==='succeeded'?<OperationProgress progress={{...initialProgress(tx.installation.id),phase:'succeeded'}}/>:null}<div className="transaction-meta"><span>{tx.restorePointId?'恢复点已保存':'安装前将准备恢复点'}</span>{tx.failureCode&&<span>原因：{failureMessages[tx.failureCode]??tx.failureCode}</span>}<button disabled={!!working} onClick={()=>void action('export',async()=>setExported(await exportTransaction(tx.id,'diagnostics')))}>导出脱敏日志</button>{tx.restorePointId&&<button disabled={!!working} onClick={()=>void action('details',async()=>{setExportConfirm(false);setCleanupConfirm(false);setMaterial(await restoreDetails(tx.id));})}>查看恢复点</button>}{recoverable(tx)&&<button disabled={!!working} onClick={()=>void action('preview',async()=>setRecovery(await previewRollback(tx.id)))}>回滚至 {tx.installation.version}</button>}</div>{['needs_recovery','recovery_failed'].includes(tx.stage)&&<p className="notice">请先恢复此实例。恢复失败时保留材料，参照人工恢复说明处理后重试。</p>}</div>;
+  const renderTransaction = (planId: string, tx: UpdateTransaction) => <div id={`transaction-${tx.id}`} tabIndex={-1} className={`transaction stage-${tx.stage}`} key={tx.id}><div className="transaction-main"><strong>{names[tx.installation.agentId]}</strong><span className="version-pair">{tx.installation.version} <span aria-hidden="true">→</span> {tx.target.version}</span><span className="status" role="status">{stageNames[tx.stage]}</span></div><p className="path">{tx.installation.commandPath}</p>{executingPlan===planId&&progress[tx.installation.id]?<OperationProgress progress={progress[tx.installation.id]}/>:tx.stage==='succeeded'?<OperationProgress progress={{...initialProgress(tx.installation.id),phase:'succeeded'}}/>:null}<div className="transaction-meta"><span>{tx.restorePointId?'恢复点已保存':'安装前将准备恢复点'}</span>{tx.failureCode&&<span>原因：{failureMessages[tx.failureCode]??tx.failureCode}</span>}<button disabled={!!working} onClick={()=>void action('export',async()=>setExported(await exportTransaction(tx.id,'diagnostics')))}>导出脱敏日志</button>{tx.restorePointId&&<button disabled={!!working} onClick={()=>void action('details',async()=>{setExportConfirm(false);setCleanupConfirm(false);setMaterial(await restoreDetails(tx.id));})}>查看恢复点</button>}{recoverable(tx)&&<button disabled={!!working} onClick={()=>void action('preview',async()=>setRecovery(await previewRollback(tx.id)))}>回滚至 {tx.installation.version}</button>}</div>{['needs_recovery','recovery_failed'].includes(tx.stage)&&<p className="notice">请先恢复此实例。恢复失败时保留材料，参照人工恢复说明处理后重试。</p>}</div>;
   return <>
     {launch&&<CliLaunch installation={launch} onClose={()=>setLaunch(undefined)}/>}
     {startup?.busy&&<p className="notice">其他进程正在处理任务，未修改其状态。结束后重新打开应用以检查未完成事务。</p>}
-    {!!startup?.items.length&&<div className="notice" role="status">发现 {startup.items.length} 项未完成或待恢复任务。没有自动重装或判定成功，请在更新记录中处理。{startup.items.filter(i=>!i.materialReady).map(i=><p key={i.transactionId}>恢复材料无法验证（{i.materialError}）。请保留应用数据、包旁保留目录与配置副本，按人工恢复说明处理。</p>)}</div>}
+    <RecoveryNotice plans={plans} startup={startup} disabled={!!working} onInspect={showPendingTask}/>
     <div className="section-heading workspace-heading"><div><p className="eyebrow">安装实例 / LOCAL TOOLS</p><h2>选择要更新的安装实例</h2></div><button onClick={()=>void scan()} disabled={scanBusy||!!working}>↻ {scanBusy?'正在扫描…':'重新扫描'}</button></div>
     {error&&<div className="error" role="alert">{error}<button onClick={()=>setError('')}>关闭</button></div>}
     <section className="tool-grid" aria-label="安装实例">
@@ -101,7 +109,8 @@ export function Workspace() {
         <label className="instance-choice"><input type="checkbox" checked={!!selected[i.id]} disabled={!i.supported||!!working} onChange={e=>toggle(i,e.target.checked)}/><strong>{i.version?`v${i.version}`:'版本未验证'}</strong><span>{i.architecture} · {i.source} · {i.supported?'可更新':'仅查看'}</span></label>
         <p className="path" title={i.commandPath}>{i.commandPath}</p><details className="command-detail"><summary>实际命令与安装位置</summary><p className="path">{i.resolvedCommand}</p></details>
         <button className="open-cli-button" disabled={!!working||scanBusy||!!agentBusy[agent]} onClick={()=>setLaunch(i)}>打开</button>
-        {i.supported&&catalogs[i.id]?.state==='update_available'&&progress[i.id]?.phase!=='succeeded'&&!versionBusy[i.id]&&<button className="primary" disabled={!!working||scanBusy||!!agentBusy[agent]||(agent==='deepseek'&&!pre.deepseek)} onClick={()=>void updateInstances([i],true)}>{agent==='deepseek'?'一键升级官方 latest':'一键升级最新稳定版'}</button>}
+        {i.supported&&blockingTransaction(plans,i.id)&&<button disabled={!!working||scanBusy} onClick={()=>showPendingTask(blockingTransaction(plans,i.id)!)}>查看待处理任务</button>}
+        {i.supported&&!blockingTransaction(plans,i.id)&&catalogs[i.id]?.state==='update_available'&&progress[i.id]?.phase!=='succeeded'&&!versionBusy[i.id]&&<button className="primary" disabled={!!working||scanBusy||!!agentBusy[agent]||(agent==='deepseek'&&!pre.deepseek)} onClick={()=>void updateInstances([i],true)}>{agent==='deepseek'?'一键升级官方 latest':'一键升级最新稳定版'}</button>}
         {progress[i.id]&&<OperationProgress progress={progress[i.id]} label={`${names[agent]} 升级进度`}/>}
         {catalogs[i.id]&&<p className={catalogs[i.id]!.state==='update_available'?'version-alert':'muted'} role="status">官方{agent==='deepseek'?' latest':'稳定'}版本：{catalogs[i.id]!.latestStable} · {({update_available:'有新版本可升级',up_to_date:'已是最新版本',local_newer:'本机版本较新',unknown_version:'版本无法比较'})[catalogs[i.id]!.state]}{catalogs[i.id]!.versions.find(v=>v.version===catalogs[i.id]!.latestStable)?.prerelease?'（预发行版）':''}</p>}
         {versionBusy[i.id]&&<p className="muted" role="status">正在检测官方版本…</p>}

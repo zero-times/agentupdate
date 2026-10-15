@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-15T02:16:01.354Z",
+  "status": "passed",
+  "limitations": [
+    "Tray callbacks are dispatched by the development probe; no physical mouse click on the macOS menu bar is asserted.",
+    "Native Apple Silicon; clean macOS 15 not tested."
+  ],
+  "result": {
+    "architecture": "aarch64",
+    "checks": {
+      "busyQuitDenied": true,
+      "closeKeepsWindowAndTray": true,
+      "completedProgressHidden": true,
+      "completedRecordsHidden": true,
+      "failedRecoveryRemainsVisible": true,
+      "failedTaskBlocksNewUpgrade": true,
+      "failuresVisible": true,
+      "leftTrayCallbackOpens": true,
+      "menuRestoresMinimized": true,
+      "noPromotionalCopy": true,
+      "pendingRecoveryActionTargetsTask": true,
+      "pendingRecoveryNamesTool": true,
+      "recoveryCanExpand": true,
+      "reopenShowsWindow": true,
+      "restoredTaskAllowsUpgrade": true,
+      "restoredTaskClearsStaleStartupNotice": true,
+      "topButtonHides": true,
+      "trayCreated": true,
+      "unrelatedToolAllowsUpgrade": true
+    }
+  }
+}

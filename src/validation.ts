@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { appInstalls, checkDesktopApps, cliProjects, getSupport, type AppOverview } from './api/desktop';
+import { appInstalls, checkDesktopApps, cliProjects, getSupport, type AppOverview, type UpdatePlan, type UpdateTransaction, type RecoveryReport } from './api/desktop';
 
 async function denied(command: string, args?: Record<string, unknown>) {
   try { await invoke(command, args); return false; } catch { return true; }
@@ -223,6 +223,29 @@ export async function validatePanel(_overview: AppOverview) {
   fixtureRoot.render(h(OperationProgress,{progress:{...initialProgress('fixture'),phase:'succeeded'}}));
   await until(()=>!host.querySelector('summary'));
   checks.completedProgressHidden=host.innerHTML==='';
+  const {RecoveryNotice,blockingTransaction}=await import('./components/RecoveryNotice');
+  const tx:UpdateTransaction={id:'recovery-fixture',planId:'fixture-plan',ordinal:0,stage:'needs_recovery',restorePointId:'fixture-restore',failureCode:'ARTIFACT_INTEGRITY',createdAt:1,updatedAt:1,
+    installation:{id:'fixture-claude',agentId:'claude',commandPath:'/fixture/bin/claude',resolvedCommand:'/fixture/claude/2.1.287',packageRoot:'/fixture/claude',prefix:'/fixture',nodePath:null,version:'2.1.287',architecture:'arm64',source:'homebrew',supported:true,versionVerified:true,reason:null},
+    target:{version:'2.1.292',prerelease:false,tarball:'https://downloads.claude.ai/fixture',integrity:'fixture'}};
+  const plan:UpdatePlan={id:'fixture-plan',state:'cancelled',cancelRequested:true,createdAt:1,transactions:[tx]};
+  const startup:RecoveryReport={busy:false,items:[{transactionId:tx.id,stage:'needs_recovery',materialReady:true,materialError:null,currentVersion:'2.1.287',installationError:null}]};
+  let inspected='';
+  const renderNotice=(plans:UpdatePlan[])=>fixtureRoot.render(h(RecoveryNotice,{plans,startup,disabled:false,onInspect:(transaction:UpdateTransaction)=>{inspected=transaction.id;}}));
+  renderNotice([plan]);
+  await until(()=>!!host.querySelector('[data-recovery-notice]'),5000);
+  checks.pendingRecoveryNamesTool=host.textContent?.includes('Claude Code CLI')===true;
+  checks.failedTaskBlocksNewUpgrade=blockingTransaction([plan],tx.installation.id)?.id===tx.id;
+  clickButton('查看恢复任务',host);
+  checks.pendingRecoveryActionTargetsTask=inspected===tx.id;
+  const restored={...plan,transactions:[{...tx,stage:'restored' as const}]};
+  renderNotice([restored]);
+  await until(()=>!host.querySelector('[data-recovery-notice]'),5000);
+  checks.restoredTaskClearsStaleStartupNotice=host.innerHTML==='';
+  checks.restoredTaskAllowsUpgrade=!blockingTransaction([restored],tx.installation.id);
+  checks.unrelatedToolAllowsUpgrade=!blockingTransaction([plan],'other-tool');
+  renderNotice([{...plan,transactions:[{...tx,stage:'recovery_failed'}]}]);
+  await until(()=>!!host.querySelector('[data-recovery-notice]'),5000);
+  checks.failedRecoveryRemainsVisible=!!blockingTransaction([{...plan,transactions:[{...tx,stage:'recovery_failed'}]}],tx.installation.id);
   fixtureRoot.unmount();host.remove();
  }catch(error){checks[String(error)]=false;}
  await invoke('finish_panel_validation',{checks});

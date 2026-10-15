@@ -1,0 +1,25 @@
+{
+  "version": "0.2.6",
+  "checkedAt": "2026-10-15T02:16:53.449790+00:00",
+  "rust": {
+    "passedExecutions": 67,
+    "failed": 0,
+    "ignored": 19
+  },
+  "panel": {
+    "arm64": {
+      "status": "passed",
+      "checks": 19
+    },
+    "x86_64": {
+      "status": "passed",
+      "checks": 19
+    }
+  },
+  "scope": "Real WebView and panel IPC; synthetic pending/restored transactions exercise recovery guidance, blocking and stale startup notice removal. No daily CLI installation changes.",
+  "limitations": [
+    "x86_64 executes via Rosetta on Apple Silicon; physical Intel untested.",
+    "Ad-hoc signing without Developer ID or Apple notarization.",
+    "Clean macOS 15 system untested."
+  ]
+}
