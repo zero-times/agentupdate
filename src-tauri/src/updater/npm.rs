@@ -230,6 +230,20 @@ pub fn validate_source(instance: &Installation, target: &AvailableVersion) -> Re
     }
     Ok(())
 }
+// npm tarballs stay tightly bounded. Native artifacts are single self-contained
+// executables published by the vendor (Claude Code 2.1.304 is already ~259 MiB),
+// so they use the same 1 GiB ceiling as the shared artifact downloader.
+const ARTIFACT_LIMIT: u64 = 256 * 1024 * 1024;
+const NATIVE_ARTIFACT_LIMIT: u64 = 1024 * 1024 * 1024;
+
+pub fn artifact_limit(instance: &Installation) -> u64 {
+    if super::native::handles(instance) {
+        NATIVE_ARTIFACT_LIMIT
+    } else {
+        ARTIFACT_LIMIT
+    }
+}
+
 pub fn download(
     instance: &Installation,
     target: &AvailableVersion,
@@ -237,14 +251,15 @@ pub fn download(
 ) -> Result<(), AppError> {
     validate_source(instance, target)?;
     crate::progress::phase(crate::progress::Phase::Downloading);
+    let limit = artifact_limit(instance);
     if path.exists() {
         files::regular_private_file(path)?;
         let file = fs::File::open(path).map_err(|_| err("ARTIFACT_READ", "缓存制品无法读取。"))?;
         let mut bytes = Vec::new();
-        file.take(256 * 1024 * 1024 + 1)
+        file.take(limit + 1)
             .read_to_end(&mut bytes)
             .map_err(|_| err("ARTIFACT_READ", "缓存制品无法读取。"))?;
-        if bytes.len() > 256 * 1024 * 1024 {
+        if bytes.len() as u64 > limit {
             return Err(err("ARTIFACT_SIZE", "缓存制品超出允许范围。"));
         }
         return verify_integrity(&bytes, &target.integrity);
@@ -266,20 +281,15 @@ pub fn download(
         match client.get(&target.tarball).send() {
             Ok(response) if response.status().is_success() => {
                 let mut bytes = Vec::new();
-                if response
-                    .content_length()
-                    .is_some_and(|n| n > 256 * 1024 * 1024)
-                {
+                if response.content_length().is_some_and(|n| n > limit) {
                     return Err(err("ARTIFACT_SIZE", "目标制品超出允许范围。"));
                 }
                 let total = response.content_length();
-                if crate::progress::copy_download(response, &mut bytes, 256 * 1024 * 1024, total)
-                    .is_err()
-                {
+                if crate::progress::copy_download(response, &mut bytes, limit, total).is_err() {
                     last = err("DOWNLOAD_INTERRUPTED", "目标制品下载中断，原安装保留。");
                     continue;
                 }
-                if bytes.len() > 256 * 1024 * 1024 {
+                if bytes.len() as u64 > limit {
                     return Err(err("ARTIFACT_SIZE", "目标制品超出允许范围。"));
                 }
                 verify_integrity(&bytes, &target.integrity)?;
@@ -630,4 +640,59 @@ fn prepare_claude_npm_binary(
     fs::set_permissions(&binary, fs::Permissions::from_mode(0o755))
         .map_err(|_| err("CLAUDE_NPM_BINARY", "Claude 平台制品无法设置执行权限。"))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::agents::AgentId;
+
+    fn installation(agent: AgentId, source: &str) -> Installation {
+        Installation {
+            id: "test".into(),
+            agent_id: agent,
+            command_path: PathBuf::from("/opt/homebrew/bin/tool"),
+            resolved_command: PathBuf::from("/opt/homebrew/bin/tool"),
+            package_root: None,
+            prefix: None,
+            node_path: None,
+            version: Some("1.0.0".into()),
+            architecture: "arm64".into(),
+            source: source.into(),
+            supported: true,
+            version_verified: true,
+            reason: None,
+        }
+    }
+
+    // Native artifacts are single vendor executables: Claude Code 2.1.304 is
+    // 271_161_296 bytes, so the npm tarball ceiling must not apply to them.
+    #[test]
+    fn native_binary_artifacts_allow_one_gibibyte() {
+        assert_eq!(NATIVE_ARTIFACT_LIMIT, 1024 * 1024 * 1024);
+        assert!(NATIVE_ARTIFACT_LIMIT > 271_161_296);
+        for source in ["homebrew", "user_native"] {
+            assert_eq!(
+                artifact_limit(&installation(AgentId::Claude, source)),
+                NATIVE_ARTIFACT_LIMIT
+            );
+        }
+        assert_eq!(
+            artifact_limit(&installation(AgentId::Codex, "homebrew")),
+            NATIVE_ARTIFACT_LIMIT
+        );
+    }
+
+    #[test]
+    fn npm_tarball_artifacts_keep_the_tight_limit() {
+        assert_eq!(ARTIFACT_LIMIT, 256 * 1024 * 1024);
+        assert_eq!(
+            artifact_limit(&installation(AgentId::Claude, "npm")),
+            ARTIFACT_LIMIT
+        );
+        assert_eq!(
+            artifact_limit(&installation(AgentId::Codex, "npm")),
+            ARTIFACT_LIMIT
+        );
+    }
 }
