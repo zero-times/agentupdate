@@ -49,7 +49,7 @@ pub fn support(id: AgentId) -> AgentSupport {
             "Claude Code CLI",
             "支持用户 npm、原生安装和 Homebrew Cask 最新稳定版升级。",
         ),
-        AgentId::Codex => ("Codex CLI", "支持 npm 与 Homebrew Cask 检测、升级和恢复。"),
+        AgentId::Codex => ("Codex CLI", "支持 npm 与 Homebrew Cask 检测与升级。"),
         AgentId::Deepseek => (
             "Deepseek Harness",
             "官方 dsh npm 渠道；预发行版本需显式选择。",

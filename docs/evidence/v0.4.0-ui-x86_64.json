@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-10-23T02:03:40.469Z",
+  "architecture": "x86_64",
+  "execution": "Rosetta on Apple Silicon",
+  "catalogSource": "Pinned previously fetched official npm metadata and artifacts, revalidated by production code",
+  "isolation": "Temporary HOME, explicit npm prefixes, artificial configuration; no daily Agent changes",
+  "desktopFixtureOriginalExact": true,
+  "desktopTransferBytes": 805944,
+  "result": {
+    "architecture": "x86_64",
+    "checks": {
+      "backupProtected": true,
+      "bothUpdated": true,
+      "desktopDirectAttempt": true,
+      "desktopOriginalPreserved": true,
+      "desktopProgress": true,
+      "desktopUnsignedFixtureRejected": true,
+      "navigationWorks": true,
+      "noInstallConfirmation": true,
+      "privateLogExported": true,
+      "progressObserved": true,
+      "releaseBadge": true,
+      "releaseBanner": true,
+      "releaseBannerNavigates": true,
+      "releaseLabel": true,
+      "releaseNavFits": true,
+      "releasePrompt": true,
+      "rendered": true,
+      "rollbackRemoved": true,
+      "selectedBoth": true,
+      "updateReminderPersists": true,
+      "updatedButtonsHidden": true
+    },
+    "transactions": [
+      {
+        "agent": "codex",
+        "original": "0.162.0",
+        "restorePoint": true,
+        "stage": "succeeded",
+        "target": "0.162.1"
+      },
+      {
+        "agent": "gemini",
+        "original": "0.62.0",
+        "restorePoint": true,
+        "stage": "succeeded",
+        "target": "0.63.0"
+      }
+    ]
+  },
+  "targetPackageVersionsVerified": true,
+  "status": "passed",
+  "interactionNote": "The background WebView automation stalled once on returning from Releases to CLI. A native accessibility click on the CLI navigation resumed it. CLI upgrades, target version and configuration verification, diagnostic export, rollback IPC denial and desktop signature rejection were automated."
+}

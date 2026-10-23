@@ -25,7 +25,7 @@ const evidence = {
   limitations: [
     'Temporary HOME and Applications on the development Mac; not a clean macOS 15 system.',
     'x86_64 on Apple Silicon uses Rosetta; not physical Intel hardware.',
-    'Launch survival does not verify packaged two-tool update/rollback interaction.',
+    'Launch survival does not verify packaged multi-tool update interaction.',
     'Candidate ad-hoc integrity is not Developer ID signing or Gatekeeper acceptance.',
   ],
 };

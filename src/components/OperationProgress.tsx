@@ -2,7 +2,7 @@ import {useCallback,useState} from 'react';
 import {Channel,type OperationProgress as Progress,type ProgressPhase} from '../api/desktop';
 
 const labels:Record<ProgressPhase,string> = {
- queued:'等待顺序执行',
+ queued:'等待可用安装资源',
  checking:'检查版本与安装条件',backing_up:'备份配置与旧版本',downloading:'下载官方制品',
  staging:'校验并准备新版本',installing:'安装新版本',verifying:'验证安装结果',
  restarting:'后台安装并重启',succeeded:'安装完成',failed:'操作未完成',cancelled:'已安全取消',

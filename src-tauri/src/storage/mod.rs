@@ -179,7 +179,8 @@ impl Store {
             {
                 let stage: Stage =
                     decode(&serde_json::to_string(&row.map_err(db_error)?).unwrap())?;
-                if stage.active() {
+                if stage.active() && !matches!(stage, Stage::NeedsRecovery | Stage::RecoveryFailed)
+                {
                     return Err(AppError::new(
                         "INSTANCE_BUSY",
                         "该实例已有未完成任务，请先处理或取消。",

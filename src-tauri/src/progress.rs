@@ -72,6 +72,9 @@ pub fn with_channel<T>(
     });
     with_reporter(reporter, job)
 }
+pub fn reporter() -> Option<Reporter> {
+    CONTEXT.with(|slot| slot.borrow().as_ref().and_then(|c| c.reporter.clone()))
+}
 fn report(update: impl FnOnce(&mut Progress)) {
     let outgoing = CONTEXT.with(|slot| {
         let mut slot = slot.borrow_mut();

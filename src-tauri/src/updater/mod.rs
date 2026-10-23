@@ -39,7 +39,7 @@ fn execute_item_inner(
         .prefix
         .as_ref()
         .ok_or_else(|| AppError::new("UNSUPPORTED_INSTALLATION", "实例没有标准 npm 目录。"))?;
-    let _lock = crate::platform::locks::OperationLock::npm(prefix)?;
+    let _lock = crate::platform::locks::OperationLock::npm_wait(prefix)?;
     let check_cancel = |store: &Store| -> Result<(), AppError> {
         if store.cancel_requested(&tx.plan_id)? {
             Err(AppError::new("CANCELLED", "更新已在修改安装前安全取消。"))

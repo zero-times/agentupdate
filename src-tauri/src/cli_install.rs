@@ -90,7 +90,7 @@ pub fn install(
     agent: AgentId,
     allow_prerelease: bool,
 ) -> Result<Record, AppError> {
-    let _lock = OperationLock::acquire(&root.join("locks/operation.lock"))?;
+    let _lock = OperationLock::shared(&root.join("locks/operation.lock"))?;
     if discovery::discover(ctx, &[])?
         .instances
         .iter()
@@ -137,7 +137,7 @@ pub fn install_target(
     let package = prefix.join("lib/node_modules").join(agent.package());
     directory(package.parent().unwrap())?;
     let command = prefix.join("bin").join(agent.key());
-    let _prefix_lock = OperationLock::npm(&prefix)?;
+    let _prefix_lock = OperationLock::npm_wait(&prefix)?;
     if fs::symlink_metadata(&package).is_ok() || fs::symlink_metadata(&command).is_ok() {
         return Err(err("INSTALL_CONFLICT"));
     }

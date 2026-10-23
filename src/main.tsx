@@ -27,7 +27,7 @@ function App() {
   useEffect(() => { void getOverview().then(setOverview).catch(e => setError(errorMessage(e))); }, []);
   useEffect(() => { if (import.meta.env.MODE === 'desktop-validation' && overview?.validationMode) void import('./validation').then(m => overview.validationPanel ? m.validatePanel(overview) : overview.validationCliLaunch ? m.validateCliLaunch(overview) : overview.validationWorkflow ? m.validateWorkflow(overview) : m.validateDesktop(overview)).catch(e => setError(errorMessage(e))); }, [overview]);
   useEffect(() => {
-    const listener = listen('panel-exit-blocked', () => setError('当前安装或恢复尚未结束，请完成后再退出。')).catch(() => () => {});
+    const listener = listen('panel-exit-blocked', () => setError('当前安装或升级尚未结束，请完成后再退出。')).catch(() => () => {});
     return () => { void listener.then(unlisten => unlisten()).catch(() => {}); };
   }, []);
   useEffect(() => { main.current?.scrollTo(0, 0); }, [view]);

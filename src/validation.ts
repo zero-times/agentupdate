@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { appInstalls, checkDesktopApps, cliProjects, getSupport, type AppOverview, type UpdatePlan, type UpdateTransaction, type RecoveryReport } from './api/desktop';
+import { planHistory, appInstalls, checkDesktopApps, cliProjects, getSupport, type AppOverview, type UpdatePlan, type UpdateTransaction, type RecoveryReport } from './api/desktop';
 
 async function denied(command: string, args?: Record<string, unknown>) {
   try { await invoke(command, args); return false; } catch { return true; }
@@ -112,32 +112,25 @@ export async function validateWorkflow(_overview:AppOverview){
  await until(()=>fixtureChoices().length===2);
  const rendered=document.querySelectorAll('[data-agent]').length===4;
  for(const checkbox of fixtureChoices())checkbox.click();
- await until(()=>{const button=Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.includes('安装所选版本'));return !!button&&!button.disabled;});
+ await until(()=>{const button=Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.includes('同时升级所选工具'));return !!button&&!button.disabled;});
  const selectedBoth=document.querySelectorAll('.instance-choice input:checked').length===2;
  const navigationWorks=await validateNavigation()&&document.querySelectorAll('.instance-choice input:checked').length===2;
  const observed=new Set<string>();let confirmationSeen=false;
  const observer=new MutationObserver(()=>{if(document.querySelector('dialog[open]'))confirmationSeen=true;for(const p of document.querySelectorAll('[data-progress-phase]'))observed.add(p.getAttribute('data-progress-phase')!);});
  observer.observe(document.body,{subtree:true,childList:true,attributes:true});
- clickButton('安装所选版本');
+ clickButton('同时升级所选工具');
  await until(()=>document.querySelectorAll('.stage-succeeded').length===2);
  await until(()=>fixtureChoices().every(input=>{const instance=input.closest('.instance')!;return instance.textContent?.includes('已是最新版本')&&!Array.from(instance.querySelectorAll('button')).some(b=>b.textContent?.includes('一键升级'));}));
  const noInstallConfirmation=!confirmationSeen&&!document.querySelector('dialog[open]');
- const progressObserved=observed.has('staging')&&observed.has('installing')&&!document.querySelector('[data-progress-phase="succeeded"]');
+ const progressObserved=observed.has('staging')&&observed.has('installing');
  for(const details of document.querySelectorAll<HTMLDetailsElement>('.recovery-history')) details.querySelector('summary')?.click();
  const updatedButtonsHidden=true;
  observer.disconnect();
  const bothUpdated=true;
- for(let i=0;i<2;i++) {
-  await readyButton('回滚至',()=>document.querySelector('.stage-succeeded')!);clickButton('回滚至',document.querySelector('.stage-succeeded')!);
-  await until(()=>document.querySelector('dialog[open]')?.textContent?.includes('恢复至')??false);
-  clickButton('确认恢复',document.querySelector('dialog[open]')!);
-  await until(()=>document.querySelectorAll('.stage-restored').length===i+1);
- }
- const bothRestored=true;
- await readyButton('导出脱敏日志',()=>document.querySelector('.stage-restored')!);clickButton('导出脱敏日志',document.querySelector('.stage-restored')!);await until(()=>document.querySelector('dialog[open]')?.textContent?.includes('导出已保存')??false);
+ const rollbackRemoved=!Array.from(document.querySelectorAll('button')).some(b=>/回滚|恢复旧|恢复为未安装/.test(b.textContent??''))&&(await Promise.all(['rollback_update','preview_rollback','rollback_cli_install','rollback_app_install'].map(command=>denied(command,{transactionId:'fixture',id:'fixture'})))).every(Boolean);
+ await readyButton('导出脱敏日志',()=>document.querySelector('.stage-succeeded')!);clickButton('导出脱敏日志',document.querySelector('.stage-succeeded')!);await until(()=>document.querySelector('dialog[open]')?.textContent?.includes('导出已保存')??false);
  const privateLogExported=document.querySelector('dialog[open]')?.textContent?.includes('不含配置或本地路径')??false;clickButton('关闭',document.querySelector('dialog[open]')!);
- await readyButton('查看恢复点',()=>document.querySelector('.stage-restored')!);clickButton('查看恢复点',document.querySelector('.stage-restored')!);await until(()=>document.querySelector('dialog[open]')?.textContent?.includes('恢复点与保留管理')??false);
- const backupProtected=Array.from(document.querySelectorAll<HTMLButtonElement>('dialog[open] button')).some(b=>b.textContent==='清理此恢复点'&&b.disabled);clickButton('关闭',document.querySelector('dialog[open]')!);
+ const backupProtected=(await planHistory()).every(plan=>plan.transactions.every(tx=>!!tx.restorePointId));
  await until(()=>document.querySelector('.release-panel')?.textContent?.includes('发现新版本')??false);
  const releasePrompt=document.querySelector('.release-panel')?.textContent?.includes('打开安装包下载')??false;
  await until(()=>!!document.querySelector('.update-banner'));
@@ -168,7 +161,7 @@ export async function validateWorkflow(_overview:AppOverview){
  const desktopOriginalPreserved=appCard.textContent?.includes('1.0.0')&&!(await appInstalls()).some(r=>r.product==='claude');
  appObserver.disconnect();
  document.querySelector<HTMLButtonElement>('[data-nav="cli"]')!.click();
- await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,noInstallConfirmation,progressObserved,updatedButtonsHidden,bothUpdated,bothRestored,privateLogExported,backupProtected,releasePrompt,releaseBadge,releaseNavFits,releaseLabel,releaseBanner,releaseBannerNavigates,updateReminderPersists,desktopDirectAttempt,desktopProgress,desktopUnsignedFixtureRejected,desktopOriginalPreserved}});
+ await invoke('finish_workflow_validation',{checks:{navigationWorks,rendered,selectedBoth,noInstallConfirmation,progressObserved,updatedButtonsHidden,bothUpdated,rollbackRemoved,privateLogExported,backupProtected,releasePrompt,releaseBadge,releaseNavFits,releaseLabel,releaseBanner,releaseBannerNavigates,updateReminderPersists,desktopDirectAttempt,desktopProgress,desktopUnsignedFixtureRejected,desktopOriginalPreserved}});
 }
 
 async function validateNavigation() {
@@ -204,15 +197,15 @@ export async function validatePanel(_overview: AppOverview) {
   checks.closeKeepsWindowAndTray=!(await probe('snapshot')).visible&&(await probe('snapshot')).trayPresent;
   checks.reopenShowsWindow=(await probe('reopen')).visible;
   await probe('quit_busy');
-  checks.busyQuitDenied=(await probe('snapshot')).visible&&document.body.innerText.includes('当前安装或恢复尚未结束');
+  checks.busyQuitDenied=(await probe('snapshot')).visible&&document.body.innerText.includes('当前安装或升级尚未结束');
   const {createRoot}=await import('react-dom/client');
   const {createElement:h}=await import('react');
-  const {RecoveryHistory}=await import('./components/RecoveryHistory');
+  const {TaskHistory}=await import('./components/TaskHistory');
   const {OperationProgress,initialProgress}=await import('./components/OperationProgress');
   const host=document.createElement('div');document.querySelector('main')!.append(host);
   const fixtureRoot=createRoot(host);
   const items=[{id:'success',state:'succeeded'},{id:'failure',state:'needs_recovery'}];
-  fixtureRoot.render(h(RecoveryHistory<{id:string;state:string}>,{items,completed:(item:{state:string})=>item.state==='succeeded',title:'待处理测试',recoveryLabel:'恢复测试',children:(item:{id:string})=>h('p',{'data-panel-fixture':item.id},item.id)}));
+  fixtureRoot.render(h(TaskHistory<{id:string;state:string}>,{items,completed:(item:{state:string})=>item.state==='succeeded',title:'待处理测试',completedLabel:'完成记录',children:(item:{id:string})=>h('p',{'data-panel-fixture':item.id},item.id)}));
   await until(()=>!!host.querySelector('[data-panel-fixture="success"]'));
   const saved=host.querySelector<HTMLElement>('[data-panel-fixture="success"]')!;
   const failed=host.querySelector<HTMLElement>('[data-panel-fixture="failure"]')!;
@@ -222,7 +215,7 @@ export async function validatePanel(_overview: AppOverview) {
   checks.recoveryCanExpand=saved.getClientRects().length>0;
   fixtureRoot.render(h(OperationProgress,{progress:{...initialProgress('fixture'),phase:'succeeded'}}));
   await until(()=>!host.querySelector('summary'));
-  checks.completedProgressHidden=host.innerHTML==='';
+  checks.completedProgressShown=!!host.querySelector('[data-progress-phase="succeeded"]');
   const {RecoveryNotice,blockingTransaction}=await import('./components/RecoveryNotice');
   const tx:UpdateTransaction={id:'recovery-fixture',planId:'fixture-plan',ordinal:0,stage:'needs_recovery',restorePointId:'fixture-restore',failureCode:'ARTIFACT_INTEGRITY',createdAt:1,updatedAt:1,
     installation:{id:'fixture-claude',agentId:'claude',commandPath:'/fixture/bin/claude',resolvedCommand:'/fixture/claude/2.1.287',packageRoot:'/fixture/claude',prefix:'/fixture',nodePath:null,version:'2.1.287',architecture:'arm64',source:'homebrew',supported:true,versionVerified:true,reason:null},
@@ -234,8 +227,8 @@ export async function validatePanel(_overview: AppOverview) {
   renderNotice([plan]);
   await until(()=>!!host.querySelector('[data-recovery-notice]'),5000);
   checks.pendingRecoveryNamesTool=host.textContent?.includes('Claude Code CLI')===true;
-  checks.failedTaskBlocksNewUpgrade=blockingTransaction([plan],tx.installation.id)?.id===tx.id;
-  clickButton('查看恢复任务',host);
+  checks.failedTaskAllowsRetry=!blockingTransaction([plan],tx.installation.id);
+  clickButton('查看失败记录',host);
   checks.pendingRecoveryActionTargetsTask=inspected===tx.id;
   const restored={...plan,transactions:[{...tx,stage:'restored' as const}]};
   renderNotice([restored]);
@@ -245,7 +238,7 @@ export async function validatePanel(_overview: AppOverview) {
   checks.unrelatedToolAllowsUpgrade=!blockingTransaction([plan],'other-tool');
   renderNotice([{...plan,transactions:[{...tx,stage:'recovery_failed'}]}]);
   await until(()=>!!host.querySelector('[data-recovery-notice]'),5000);
-  checks.failedRecoveryRemainsVisible=!!blockingTransaction([{...plan,transactions:[{...tx,stage:'recovery_failed'}]}],tx.installation.id);
+  checks.failedTaskAllowsRetryAgain=!blockingTransaction([{...plan,transactions:[{...tx,stage:'recovery_failed'}]}],tx.installation.id);
   fixtureRoot.unmount();host.remove();
  }catch(error){checks[String(error)]=false;}
  await invoke('finish_panel_validation',{checks});

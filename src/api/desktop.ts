@@ -73,9 +73,6 @@ export function planHistory(): Promise<UpdatePlan[]> { return invoke('get_plan_h
 
 export function executeUpdate(transactionId: string): Promise<UpdateTransaction> { return invoke('execute_update', { transactionId, onProgress:new Channel<OperationProgress>() }); }
 
-export type RollbackPreview = { transactionId: string; originalVersion: string; configurationChanged: boolean; restoresAbsentFiles: boolean; preservationLocation: string };
-export function previewRollback(transactionId: string): Promise<RollbackPreview> { return invoke('preview_rollback', { transactionId }); }
-export function rollbackUpdate(transactionId: string, confirmChangedConfig = false): Promise<UpdateTransaction> { return invoke('rollback_update', { transactionId, confirmChangedConfig }); }
 
 export function executePlan(planId: string, continueAfterFailure = false, onProgress?:ProgressChannel): Promise<UpdatePlan> { return invoke('execute_plan', { planId, continueAfterFailure, onProgress:onProgress??new Channel<OperationProgress>() }); }
 export function cancelPlan(planId: string): Promise<UpdatePlan> { return invoke('cancel_plan', { planId }); }
@@ -83,11 +80,8 @@ export function cancelPlan(planId: string): Promise<UpdatePlan> { return invoke(
 export type RecoveryReport = {busy:boolean; items:{transactionId:string;stage:Stage;materialReady:boolean;materialError:string|null;currentVersion:string|null;installationError:string|null}[]};
 export function inspectInterrupted(): Promise<RecoveryReport> { return invoke('inspect_interrupted_tasks'); }
 
-export type RestoreDetails = {transactionId:string;restorePointId:string|null;verified:boolean;errorCode:string|null;bytes:number;configRoot:string|null;configPaths:string[];canDelete:boolean;protectionReason:string|null};
 export type ExportResult = {id:string;directory:string;sensitive:boolean};
-export function restoreDetails(transactionId:string):Promise<RestoreDetails> {return invoke('get_restore_details',{transactionId});}
 export function exportTransaction(transactionId:string,kind:'diagnostics'|'restore',confirmedSensitive=false):Promise<ExportResult> {return invoke('export_transaction',{transactionId,kind,confirmedSensitive});}
-export function cleanupRestore(transactionId:string):Promise<void> {return invoke('cleanup_restore',{transactionId});}
 export function revealExport(exportId:string):Promise<void> {return invoke('reveal_export',{exportId});}
 
 export type ReleaseCheck = {state:'not_checked'|'no_releases'|'update_available'|'up_to_date'|'local_newer'|'failed';currentVersion:string;latest:{version:string;tag:string;publishedAt:string;notes:string;url:string}|null;asset:{name:string;url:string}|null;checkedAt:number|null;successfulAt:number|null;cached:boolean;errorCode:string|null;retryAfter:number};
@@ -102,13 +96,11 @@ export function openDesktopChannel(product:DesktopProduct,download=false):Promis
 export type CliInstall = {id:string;agent:AgentId;version:string;state:string;command:string;package:string;failureCode:string|null;createdAt:number};
 export function installCli(agent:AgentId,allowPrerelease=false,onProgress?:ProgressChannel):Promise<CliInstall>{return invoke('install_cli',{agent,allowPrerelease,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function cliInstalls():Promise<CliInstall[]>{return invoke('cli_install_history');}
-export function rollbackCliInstall(id:string):Promise<CliInstall>{return invoke('rollback_cli_install',{id});}
 export type BundleProduct=DesktopProduct|'agentupdate';
 export type AppInstall={id:string;product:BundleProduct;version:string;destination:string;state:string;hasBackup:boolean;failureCode:string|null;createdAt:number};
 export function prepareAppInstall(product:BundleProduct):Promise<AppInstall>{return invoke('prepare_app_install',{product});}
 export function installApp(product:BundleProduct,onProgress?:ProgressChannel):Promise<AppInstall>{return invoke('install_app',{product,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function finishAppInstall(id:string,onProgress?:ProgressChannel):Promise<AppInstall>{return invoke('finish_app_install',{id,onProgress:onProgress??new Channel<OperationProgress>()});}
 export function appInstalls():Promise<AppInstall[]>{return invoke('app_install_history');}
-export function rollbackAppInstall(id:string):Promise<AppInstall>{return invoke('rollback_app_install',{id});}
 
 export const hideMainWindow = () => invoke<void>('hide_main_window');
