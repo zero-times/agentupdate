@@ -1,0 +1,53 @@
+{
+  "checkedAt": "2026-10-23T02:02:25.860Z",
+  "architecture": "arm64",
+  "execution": "native Apple Silicon",
+  "catalogSource": "Pinned previously fetched official npm metadata and artifacts, revalidated by production code",
+  "isolation": "Temporary HOME, explicit npm prefixes, artificial configuration; no daily Agent changes",
+  "desktopFixtureOriginalExact": true,
+  "desktopTransferBytes": 805950,
+  "result": {
+    "architecture": "aarch64",
+    "checks": {
+      "backupProtected": true,
+      "bothUpdated": true,
+      "desktopDirectAttempt": true,
+      "desktopOriginalPreserved": true,
+      "desktopProgress": true,
+      "desktopUnsignedFixtureRejected": true,
+      "navigationWorks": true,
+      "noInstallConfirmation": true,
+      "privateLogExported": true,
+      "progressObserved": true,
+      "releaseBadge": true,
+      "releaseBanner": true,
+      "releaseBannerNavigates": true,
+      "releaseLabel": true,
+      "releaseNavFits": true,
+      "releasePrompt": true,
+      "rendered": true,
+      "rollbackRemoved": true,
+      "selectedBoth": true,
+      "updateReminderPersists": true,
+      "updatedButtonsHidden": true
+    },
+    "transactions": [
+      {
+        "agent": "codex",
+        "original": "0.162.0",
+        "restorePoint": true,
+        "stage": "succeeded",
+        "target": "0.162.1"
+      },
+      {
+        "agent": "gemini",
+        "original": "0.62.0",
+        "restorePoint": true,
+        "stage": "succeeded",
+        "target": "0.63.0"
+      }
+    ]
+  },
+  "targetPackageVersionsVerified": true,
+  "status": "passed"
+}

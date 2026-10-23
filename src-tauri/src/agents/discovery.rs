@@ -180,12 +180,12 @@ fn inspect(
         source: "unknown".into(),
         supported: false,
         version_verified: false,
-        reason: Some("无法确认官方 npm 安装与恢复范围。".into()),
+        reason: Some("无法确认官方 npm 安装范围。".into()),
     };
     let resolved_text = resolved.to_string_lossy();
     if resolved_text.contains("/Cellar/") || resolved_text.contains("/Caskroom/") {
         instance.source = "homebrew".into();
-        instance.reason = Some("Homebrew 安装仅显示版本；指定版本恢复尚未验证。".into());
+        instance.reason = Some("此 Homebrew 安装方式暂不支持升级。".into());
         populate_native_version(context, &mut instance);
         crate::updater::native::enable(context, &mut instance);
         return Ok(instance);
@@ -210,7 +210,7 @@ fn inspect(
     let Some((root, manifest)) = package else {
         if resolved_text.contains("/.local/") || resolved_text.contains("/Applications/") {
             instance.source = "native".into();
-            instance.reason = Some("原生安装的恢复协议尚未验证。".into());
+            instance.reason = Some("此原生安装方式暂不支持升级。".into());
         }
         populate_native_version(context, &mut instance);
         crate::updater::native::enable(context, &mut instance);

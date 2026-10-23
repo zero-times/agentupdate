@@ -1,0 +1,17 @@
+{
+  "version": "0.4.0",
+  "commands": {
+    "npm run check": "passed: TypeScript, Rust formatting, Rust release tests (73 passed, 19 ignored before the final additional prefix-lock test)",
+    "cargo test --release --locked --offline --test batch_queue": "passed: 9 passed, 1 ignored; includes the final additional prefix-lock test",
+    "npm run build:validation": "passed: universal arm64/x86_64 validation application",
+    "node scripts/validate-ui-workflow.mjs arm64": "passed",
+    "node scripts/validate-ui-workflow.mjs x86_64": "passed with one native navigation intervention; see UI evidence",
+    "node scripts/validate-panel.mjs arm64": "passed",
+    "node scripts/validate-panel.mjs x86_64": "passed"
+  },
+  "scope": "Concurrency, failure isolation, shared-prefix waiting, cancellation, activity/self-update exclusion, real isolated npm updates, backup preservation, rollback IPC rejection and native window/tray behavior. No daily CLI installations or configuration were modified.",
+  "limitations": [
+    "Physical Intel and clean macOS 15 machines not tested.",
+    "Validation-only app exercises isolated updates; production package launch verification is separate."
+  ]
+}

@@ -6,97 +6,135 @@ pub struct AppState {
     pub restarting: std::sync::atomic::AtomicBool,
     pub installations: std::sync::Mutex<Vec<agents::discovery::Installation>>,
     pub store: std::sync::Mutex<Option<storage::Store>>,
-    pub operation: std::sync::Mutex<()>,
+    pub operation: std::sync::RwLock<()>,
+}
+
+// Shared activity guards allow independent tools to update while excluding self-update,
+// startup reconciliation, cleanup and exit. File locks extend this across app processes.
+#[allow(dead_code)]
+pub enum Activity<'a> {
+    Shared(std::sync::RwLockReadGuard<'a, ()>),
+    Exclusive(std::sync::RwLockWriteGuard<'a, ()>),
+}
+pub struct Operation<'a> {
+    _activity: Activity<'a>,
+    _global: platform::locks::OperationLock,
+    _resource: Option<platform::locks::OperationLock>,
+}
+pub fn begin_operation<'a>(
+    state: &'a AppState,
+    root: &std::path::Path,
+    exclusive: bool,
+    key: Option<&str>,
+) -> Result<Operation<'a>, AppError> {
+    let busy = || {
+        AppError::new(
+            "OPERATION_BUSY",
+            "该工具正在处理，或本应用正在安装更新，请稍后重试。",
+        )
+    };
+    let activity = if exclusive {
+        Activity::Exclusive(state.operation.try_write().map_err(|_| busy())?)
+    } else {
+        Activity::Shared(state.operation.try_read().map_err(|_| busy())?)
+    };
+    let path = root.join("locks/operation.lock");
+    let global = if exclusive {
+        platform::locks::OperationLock::acquire(&path)?
+    } else {
+        platform::locks::OperationLock::shared(&path)?
+    };
+    let resource = key
+        .map(|key| platform::locks::OperationLock::resource(root, key, false))
+        .transpose()?;
+    Ok(Operation {
+        _activity: activity,
+        _global: global,
+        _resource: resource,
+    })
 }
 
 pub fn execute(state: &AppState, id: &str) -> Result<storage::model::UpdateTransaction, AppError> {
-    let _operation = state
-        .operation
-        .try_lock()
-        .map_err(|_| AppError::new("OPERATION_BUSY", "已有更新或恢复操作正在进行。"))?;
-    let (root, transaction) = with_store(state, |store| {
+    let (root, tx) = with_store(state, |store| {
         Ok((store.root.clone(), store.transaction(id)?))
     })?;
-    let _lock = platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
-    let context = updater::npm::Context::current(&transaction.installation)?;
-    updater::execute_item(&mut storage::Store::open(&root)?, id, &context)
+    let key = format!("cli:{}", tx.installation.agent_id.key());
+    let _operation = begin_operation(state, &root, false, Some(&key))?;
+    execute_transaction(&root, id)
+}
+
+fn execute_transaction(
+    root: &std::path::Path,
+    id: &str,
+) -> Result<storage::model::UpdateTransaction, AppError> {
+    let mut store = storage::Store::open(root)?;
+    let tx = store.transaction(id)?;
+    crate::progress::operation(&tx.installation.id, || {
+        let context = match updater::npm::Context::current(&tx.installation) {
+            Ok(context) => context,
+            Err(e) => {
+                store.transition(
+                    id,
+                    storage::model::Stage::Queued,
+                    storage::model::Stage::Preflight,
+                    None,
+                )?;
+                store.transition(
+                    id,
+                    storage::model::Stage::Preflight,
+                    storage::model::Stage::PreparationFailed,
+                    Some(e.code),
+                )?;
+                return Err(e);
+            }
+        };
+        #[cfg(feature = "desktop-validation")]
+        if let Some(catalog) = std::env::var_os("AGENTUPDATE_TEST_CATALOG_DIR") {
+            let source = std::path::PathBuf::from(catalog)
+                .join(format!("{}.tgz", tx.installation.agent_id.key()));
+            let work = store.root.join("work").join(id);
+            platform::files::private_directory(&work)?;
+            std::fs::copy(source, work.join("target.tgz"))
+                .map_err(|_| AppError::new("ARTIFACT_READ", "隔离测试制品不可用。"))?;
+        }
+        updater::execute_item(&mut store, id, &context)
+    })
 }
 
 pub fn execute_plan(
     state: &AppState,
     id: &str,
-    continue_after_failure: bool,
+    _continue_after_failure: bool,
 ) -> Result<storage::model::UpdatePlan, AppError> {
-    let _operation = state
-        .operation
-        .try_lock()
-        .map_err(|_| AppError::new("OPERATION_BUSY", "已有更新或恢复操作正在进行。"))?;
     let root = with_store(state, |store| Ok(store.root.clone()))?;
-    let _lock = platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
-    updater::queue::run(
-        &mut storage::Store::open(&root)?,
-        id,
-        continue_after_failure,
-        |store, id| {
-            let tx = store.transaction(id)?;
-            let context = match updater::npm::Context::current(&tx.installation) {
-                Ok(context) => context,
-                Err(e) => {
-                    store.transition(
-                        id,
-                        storage::model::Stage::Queued,
-                        storage::model::Stage::Preflight,
-                        None,
-                    )?;
-                    store.transition(
-                        id,
-                        storage::model::Stage::Preflight,
-                        storage::model::Stage::PreparationFailed,
-                        Some(e.code),
-                    )?;
-                    return Err(e);
+    let _operation = begin_operation(state, &root, false, Some(&format!("plan:{id}")))?;
+    let reporter = crate::progress::reporter();
+    let plan = updater::queue::run_concurrent(&root, id, |root, id| {
+        crate::progress::with_reporter(reporter.clone(), || execute_transaction(root, id))
+    })?;
+    // Publish terminal states for items cancelled while waiting or failing before an adapter
+    // could emit progress, so cards cannot remain stuck in the queued state.
+    if let Some(reporter) = reporter {
+        for tx in &plan.transactions {
+            use storage::model::Stage;
+            let phase = match tx.stage {
+                Stage::Succeeded => crate::progress::Phase::Succeeded,
+                Stage::Cancelled => crate::progress::Phase::Cancelled,
+                Stage::PreparationFailed | Stage::NeedsRecovery | Stage::RecoveryFailed => {
+                    crate::progress::Phase::Failed
                 }
+                _ => continue,
             };
-            #[cfg(feature = "desktop-validation")]
-            if let Some(root) = std::env::var_os("AGENTUPDATE_TEST_CATALOG_DIR") {
-                let source = std::path::PathBuf::from(root)
-                    .join(format!("{}.tgz", tx.installation.agent_id.key()));
-                let work = store.root.join("work").join(id);
-                platform::files::private_directory(&work)?;
-                std::fs::copy(source, work.join("target.tgz"))
-                    .map_err(|_| AppError::new("ARTIFACT_READ", "隔离测试制品不可用。"))?;
-            }
-            updater::execute_item(store, id, &context)
-        },
-    )
-}
-
-pub fn rollback(
-    state: &AppState,
-    id: &str,
-    confirm_changed_config: bool,
-) -> Result<storage::model::UpdateTransaction, AppError> {
-    let _operation = state
-        .operation
-        .try_lock()
-        .map_err(|_| AppError::new("OPERATION_BUSY", "已有更新或恢复操作正在进行。"))?;
-    let root = with_store(state, |store| Ok(store.root.clone()))?;
-    let _lock = platform::locks::OperationLock::acquire(&root.join("locks/operation.lock"))?;
-    let home = std::env::var_os("HOME")
-        .map(std::path::PathBuf::from)
-        .ok_or_else(|| AppError::new("HOME_UNAVAILABLE", "无法确认用户配置目录。"))?;
-    let context = updater::npm::Context {
-        home,
-        npm: std::path::PathBuf::new(),
-        cache: None,
-        offline: true,
-    };
-    updater::rollback::execute(
-        &mut storage::Store::open(&root)?,
-        id,
-        &context,
-        confirm_changed_config,
-    )
+            reporter(crate::progress::Progress {
+                target: tx.installation.id.clone(),
+                phase,
+                downloaded_bytes: 0,
+                total_bytes: None,
+                error_code: tx.failure_code.clone(),
+            });
+        }
+    }
+    Ok(plan)
 }
 
 pub fn with_store<T>(

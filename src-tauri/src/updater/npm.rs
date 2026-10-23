@@ -474,7 +474,7 @@ pub fn swap_package(
     if replacement.exists() || displaced.exists() {
         return Err(err(
             "SWAP_CONFLICT",
-            "安装目录有未处理的更新材料，请先恢复。",
+            "安装目录有未处理的更新材料，请检查诊断记录后重新安装。",
         ));
     }
     let snapshot = snapshot::scan(staged.package_root.as_ref().unwrap(), None)?;
@@ -489,7 +489,7 @@ pub fn swap_package(
     snapshot::materialize(&archive, &snapshot, &replacement)?;
     files::sync_directory(parent)?;
     fs::rename(original, &displaced)
-        .map_err(|_| err("INSTALL_SWAP", "无法保留原安装；需检查恢复。"))?;
+        .map_err(|_| err("INSTALL_SWAP", "无法保留原安装，请检查诊断记录。"))?;
     files::sync_directory(parent)?;
     #[cfg(feature = "desktop-validation")]
     if std::env::var("AGENTUPDATE_TEST_FAIL_SWAP_AGENT")
@@ -503,7 +503,7 @@ pub fn swap_package(
         ));
     }
     fs::rename(&replacement, original)
-        .map_err(|_| err("INSTALL_SWAP", "新安装发布失败；需恢复原安装。"))?;
+        .map_err(|_| err("INSTALL_SWAP", "新安装发布失败，请通过官方渠道重新安装。"))?;
     files::sync_directory(parent)?;
     let relative = staged
         .resolved_command

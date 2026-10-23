@@ -112,7 +112,7 @@ pub fn on_run_event(app: &AppHandle, event: tauri::RunEvent) {
             let state = app.state::<AppState>();
             // The self-update helper must be allowed to stop this process.
             if !state.restarting.load(std::sync::atomic::Ordering::SeqCst)
-                && state.operation.try_lock().is_err()
+                && state.operation.try_write().is_err()
             {
                 api.prevent_exit();
                 let _ = show(app);

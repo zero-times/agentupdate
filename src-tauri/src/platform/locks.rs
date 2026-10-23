@@ -24,7 +24,36 @@ impl OperationLock {
         }
         Self::acquire(&prefix.join(".agentupdate-npm.lock"))
     }
+    pub fn shared(path: &Path) -> Result<Self, AppError> {
+        Self::open(path, libc::LOCK_SH | libc::LOCK_NB)
+    }
+    pub fn wait(path: &Path) -> Result<Self, AppError> {
+        Self::open(path, libc::LOCK_EX)
+    }
+    pub fn resource(root: &Path, key: &str, wait: bool) -> Result<Self, AppError> {
+        use sha2::{Digest, Sha256};
+        let name = format!("resource-{:x}.lock", Sha256::digest(key.as_bytes()));
+        let path = root.join("locks").join(name);
+        if wait {
+            Self::wait(&path)
+        } else {
+            Self::acquire(&path)
+        }
+    }
+    pub fn npm_wait(prefix: &Path) -> Result<Self, AppError> {
+        // Validate ownership and canonical identity before waiting on the same inode.
+        match Self::npm(prefix) {
+            Ok(lock) => Ok(lock),
+            Err(e) if e.code == "OPERATION_BUSY" => {
+                Self::wait(&prefix.join(".agentupdate-npm.lock"))
+            }
+            Err(e) => Err(e),
+        }
+    }
     pub fn acquire(path: &Path) -> Result<Self, AppError> {
+        Self::open(path, libc::LOCK_EX | libc::LOCK_NB)
+    }
+    fn open(path: &Path, flags: i32) -> Result<Self, AppError> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -40,7 +69,7 @@ impl OperationLock {
         if !m.is_file() || m.uid() != unsafe { libc::geteuid() } || m.nlink() != 1 {
             return Err(AppError::new("LOCK_UNSAFE", "操作锁的类型或所有权不正确。"));
         }
-        if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
+        if unsafe { libc::flock(file.as_raw_fd(), flags) } != 0 {
             return Err(AppError::new(
                 "OPERATION_BUSY",
                 "另一进程正在更新或恢复，等待其结束后重试。",

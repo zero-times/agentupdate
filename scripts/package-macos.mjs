@@ -110,8 +110,11 @@ try {
   for (const forbidden of ['probe_panel', 'finish_panel_validation', 'AGENTUPDATE_VALIDATION_PANEL', 'finish_cli_launch_validation', 'AGENTUPDATE_TEST_DISCOVERY_DIR', 'AGENTUPDATE_VALIDATION_CLI_LAUNCH', 'finish_workflow_validation', 'finish_desktop_validation', 'restricted_probe', 'AGENTUPDATE_TEST_FAIL_SWAP_AGENT', 'AGENTUPDATE_TEST_FAIL_VERIFY_AGENT', 'AGENTUPDATE_TEST_FAIL_RESTORE_AGENT', 'AGENTUPDATE_TEST_CATALOG_DIR', 'AGENTUPDATE_TEST_OFFLINE', 'AGENTUPDATE_VALIDATION_WORKFLOW']) {
     if (markers.includes(forbidden)) throw new Error('Validation marker in production bundle: ' + forbidden);
   }
-  for (const required of ['open_cli', 'save_cli_project', 'get_cli_projects', 'create_update_plan', 'check_app_release', 'rollback_update', 'check_desktop_apps', 'open_desktop_app_channel']) {
+  for (const required of ['open_cli', 'save_cli_project', 'get_cli_projects', 'create_update_plan', 'check_app_release', 'execute_plan', 'check_desktop_apps', 'open_desktop_app_channel']) {
     if (!markers.includes(required)) throw new Error('Production command missing: ' + required);
+  }
+  for (const removed of ['rollback_update', 'preview_rollback', 'rollback_cli_install', 'rollback_app_install']) {
+    if (markers.includes(removed)) throw new Error('Removed command in production bundle: ' + removed);
   }
   if ((await readdir(path.join(repo, 'dist/assets'))).some(name => name.includes('validation'))) throw new Error('Validation frontend in production assets.');
   await run('/usr/bin/codesign', ['--verify', '--deep', '--strict', app]);
