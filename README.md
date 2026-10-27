@@ -2,7 +2,7 @@
 
 AgentUpdate 是 macOS 上的 AI Agent 工具更新工作台，集中发现本机 CLI 与桌面应用、查询官方版本、安装并升级。支持 Codex、Claude Code、Gemini、Deepseek CLI，以及 Codex、Claude、ChatGPT 桌面应用。
 
-下载：[GitHub Releases](https://github.com/zero-times/agentupdate/releases/latest)。当前版本 v0.4.0，详见[更新说明](docs/releases/v0.4.0.md)。提供 macOS 15+、Apple Silicon / Intel 通用 DMG、应用 ZIP 和 SHA256SUMS。安装包采用 ad-hoc 完整性签名，未完成 Developer ID 签名与 Apple 公证。
+下载：[GitHub Releases](https://github.com/zero-times/agentupdate/releases/latest)。当前版本 v0.4.1，详见[更新说明](docs/releases/v0.4.1.md)。提供 macOS 15+、Apple Silicon / Intel 通用 DMG、应用 ZIP 和 SHA256SUMS。安装包采用 ad-hoc 完整性签名，未完成 Developer ID 签名与 Apple 公证。
 
 ## 同时升级
 
@@ -14,7 +14,7 @@ AgentUpdate 是 macOS 上的 AI Agent 工具更新工作台，集中发现本机
 
 ## 备份与任务记录
 
-升级前仍备份配置与旧安装，材料保存在当前用户的私有应用数据目录。历史记录可查看结果、错误码并导出脱敏日志。
+升级前仍备份配置与旧安装，材料保存在当前用户的私有应用数据目录。历史记录可查看结果、错误码并导出脱敏日志。已结束的任务（含失败）默认折叠在页面底部，每次显示 5 条；失败摘要按安装实例去重，后续成功后不再提示旧失败。
 
 v0.4.0 已移除恢复旧版本、回滚应用和恢复为未安装功能，包括界面入口和对应桌面调用接口。历史数据继续兼容读取，不自动删除既有备份。失败记录不会永久阻止重新检测和升级；若工具命令已经损坏，请通过官方安装方式重新安装。
 
@@ -42,4 +42,4 @@ npm run package:mac -- --candidate
 
 发布前同步 package.json、package-lock.json、Cargo.toml、Cargo.lock 与 tauri.conf.json 的版本，提交源码并从干净工作区构建。产物位于 `release-artifacts/v<版本>/candidate-<时间>/`。使用 `node scripts/validate-macos-package.mjs <制品目录>` 验证安装包，再将对应 tag、更新说明、DMG、应用 ZIP、SHA256SUMS 与构建清单上传 GitHub Release。
 
-开发说明见[桌面开发](docs/desktop-development.md)，签名公证流程见[macOS 发布材料](docs/macos-release.md)。较早文档保留当时版本的行为，当前功能以本 README 和 v0.4.0 更新说明为准。
+开发说明见[桌面开发](docs/desktop-development.md)，签名公证流程见[macOS 发布材料](docs/macos-release.md)。较早文档保留当时版本的行为，当前功能以本 README 和当前版本更新说明为准。

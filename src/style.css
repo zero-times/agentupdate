@@ -270,3 +270,8 @@ main > section[data-view] { animation: view-enter .28s ease; }
   .check-draw path { animation: none !important; }
   main > section[data-view], .tool-grid > .tool-card { animation: none !important; }
 }
+
+.history > .recovery-history > summary { padding: 12px 20px; }
+.history-more { margin: 12px 20px; }
+.failure-history { margin-bottom: 16px; color: var(--muted); font-size: 12px; }
+.failure-history > div { padding: 8px 0; }

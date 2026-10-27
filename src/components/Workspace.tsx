@@ -23,6 +23,7 @@ export function Workspace() {
   const [catalogs,setCatalogs] = useState<Record<string,VersionCatalog|undefined>>({});
   const [versionBusy,setVersionBusy] = useState<Record<string,boolean>>({});
   const [versionErrors,setVersionErrors] = useState<Record<string,string>>({});
+  const [inspected,setInspected] = useState<UpdateTransaction>();
   const [plans,setPlans] = useState<UpdatePlan[]>([]);
   const [agentBusy,setAgentBusy] = useState<Partial<Record<AgentId,boolean>>>({});
   const [executingPlans,setExecutingPlans] = useState<Record<string,boolean>>({});
@@ -66,9 +67,14 @@ export function Workspace() {
   const chosen = report?.instances.filter(i=>selected[i.id]&&i.supported) ?? [];
   const eligible = chosen.filter(i=>!agentWorking(i.agentId)&&!blockingTransaction(plans,i.id)&&((targets[i.id]??'latest')==='latest'?catalogs[i.id]?.state==='update_available':targets[i.id]!==i.version));
   function showPendingTask(tx: UpdateTransaction) {
-    const row=document.getElementById(`transaction-${tx.id}`);
-    row?.scrollIntoView({block:'center'});
-    row?.focus({preventScroll:true});
+    setInspected(tx);
+    requestAnimationFrame(() => {
+      const row=document.getElementById(`transaction-${tx.id}`);
+      let parent=row?.parentElement;
+      while(parent){if(parent instanceof HTMLDetailsElement)parent.open=true;parent=parent.parentElement;}
+      row?.scrollIntoView({block:'center'});
+      row?.focus({preventScroll:true});
+    });
   }
   async function checkAgent(agent:AgentId) {
     if(inFlight.current)return;inFlight.current=true;setAgentBusy(v=>({...v,[agent]:true}));setError('');
@@ -96,12 +102,11 @@ export function Workspace() {
     await action(plan.id,async()=>{setExecutingPlans(v=>({...v,[plan.id]:true}));try{await executePlan(plan.id,plan.state==='paused',channel());await discoverAgents(extraPaths).then(setReport);}finally{setExecutingPlans(v=>({...v,[plan.id]:false}));}}, [...new Set(plan.transactions.map(tx=>`agent:${tx.installation.agentId}`))]);
   }
   function toggle(i:Installation,checked:boolean) {setSelected(v=>({...v,[i.id]:checked}));if(checked&&!catalogs[i.id]&&!versionBusy[i.id]) void versions(i.agentId,!!pre[i.agentId],i.id);}
-  const planCompleted = (plan: UpdatePlan) => ["finished","cancelled"].includes(plan.state)&&plan.transactions.every(tx=>["succeeded","restored","cancelled"].includes(tx.stage));
+  const planCompleted = (plan: UpdatePlan) => plan.transactions.every(tx=>!['queued','preflight','backing_up','prepared','installing','verifying','recovering'].includes(tx.stage));
   const renderTransaction = (planId: string, tx: UpdateTransaction) => <div id={`transaction-${tx.id}`} tabIndex={-1} className={`transaction stage-${tx.stage}`} key={tx.id}><div className="transaction-main"><strong>{names[tx.installation.agentId]}</strong><span className="version-pair">{tx.installation.version} <span aria-hidden="true">→</span> {tx.target.version}</span><span className="status" role="status">{stageNames[tx.stage]}</span></div><p className="path">{tx.installation.commandPath}</p>{executingPlans[planId]&&progress[tx.installation.id]?<OperationProgress progress={progress[tx.installation.id]}/>:tx.stage==='succeeded'?<OperationProgress progress={{...initialProgress(tx.installation.id),phase:'succeeded'}}/>:null}<div className="transaction-meta"><span>{tx.restorePointId?'升级前备份已保存':'安装前将备份配置'}</span>{tx.failureCode&&<span>原因：{failureMessages[tx.failureCode]??tx.failureCode}</span>}<button disabled={anyWorking} onClick={()=>void action('export',async()=>setExported(await exportTransaction(tx.id,'diagnostics')))}>导出脱敏日志</button></div>{['needs_recovery','recovery_failed'].includes(tx.stage)&&<p className="notice">更新未完成，请重新检测后重试；若命令不可用，请通过官方安装方式重新安装。</p>}</div>;
   return <>
     {launch&&<CliLaunch installation={launch} onClose={()=>setLaunch(undefined)}/>}
     {startup?.busy&&<p className="notice">其他进程正在处理任务，未修改其状态。结束后重新打开应用以检查未完成事务。</p>}
-    <RecoveryNotice plans={plans} startup={startup} disabled={anyWorking} onInspect={showPendingTask}/>
     <div className="section-heading workspace-heading"><div><p className="eyebrow">安装实例 / LOCAL TOOLS</p><h2>选择要更新的安装实例</h2></div><button onClick={()=>void scan()} disabled={scanBusy||anyWorking}>{scanBusy?<><Spinner size={12}/>正在扫描…</>:'↻ 重新扫描'}</button></div>
     {error&&<div className="error" role="alert">{error}<button onClick={()=>setError('')}>关闭</button></div>}
     <section className="tool-grid" aria-label="安装实例">
@@ -131,10 +136,11 @@ export function Workspace() {
     <details className="extra-path"><summary>补充工具命令路径</summary><form onSubmit={e=>{e.preventDefault();if(!path.trim())return;const next=[...new Set([...extraPaths,path.trim()])];setExtraPaths(next);setPath('');void scan(next);}}><label>绝对命令路径<input value={path} onChange={e=>setPath(e.target.value)} placeholder="例如 /Users/you/.npm/bin/codex" required/></label><button disabled={anyWorking||scanBusy}>添加并扫描</button></form>{extraPaths.map(p=><div className="path" key={p}>{p}<button onClick={()=>{const next=extraPaths.filter(v=>v!==p);setExtraPaths(next);void scan(next);}} disabled={anyWorking||scanBusy}>移除</button></div>)}</details>
     <p className="muted">不同工具可同时升级；共享安装目录的操作会依次执行。单项失败不影响其余工具。</p>
     <div className="plan-bar"><div><strong>已选择 {chosen.length} 项</strong></div><button className="primary" disabled={!eligible.length||scanBusy||eligible.some(i=>!catalogs[i.id]||versionBusy[i.id]||(i.agentId==='deepseek'&&!pre.deepseek))} onClick={()=>void updateInstances(eligible)}>{`同时升级所选工具${eligible.length?` · ${eligible.length} 项`:''}`}</button></div>
-    <TaskHistory items={plans} completed={planCompleted} title="更新任务" completedLabel="已完成的更新">
+    <RecoveryNotice plans={plans} startup={startup} disabled={anyWorking} onInspect={showPendingTask}/>
+    <TaskHistory revealId={inspected?.planId} items={plans} completed={planCompleted} title="更新任务" completedLabel="更新历史（含失败记录）">
       {plan=><article className="history-plan" key={plan.id}><div className="plan-heading"><time>{time(plan.createdAt)}</time><span>{plan.transactions.length} 项 · {{ready:'待执行',running:'同时升级中',paused:'执行中断',finished:'已结束',cancelled:'已取消'}[plan.state]??plan.state}</span></div><div className="queue-controls">{['ready','paused'].includes(plan.state)&&<button className="primary" disabled={plan.transactions.some(tx=>agentWorking(tx.installation.agentId))} onClick={()=>void resume(plan)}>执行剩余项</button>}{['ready','paused','running'].includes(plan.state)&&<button disabled={plan.cancelRequested} onClick={()=>{void cancelPlan(plan.id).then(refreshHistory).catch(e=>setError(errorMessage(e)));}}>{plan.cancelRequested?'已请求取消 · 等待安全边界':plan.state==='running'?'安全取消':'结束计划'}</button>}</div>{plan.transactions.map(tx=>renderTransaction(plan.id,tx))}</article>}
     </TaskHistory>
-    <TaskHistory items={installs} completed={item=>['succeeded','restored'].includes(item.state)} title="CLI 安装记录" completedLabel="已完成的安装">{item=><div className="instance" key={item.id}><strong>{names[item.agent]} · {item.version}</strong><p className="path">{item.command}</p><span>{item.state==='succeeded'?'安装完成':item.state==='restored'?'历史已结束':item.state==='prepared'?'尚未发布安装':'安装未完成 · 请重新检测'}</span>{item.failureCode&&<p className="notice">{item.failureCode}</p>}</div>}</TaskHistory>
+    <TaskHistory items={installs} completed={item=>!['prepared','installing'].includes(item.state)} title="CLI 安装记录" completedLabel="安装历史（含失败记录）">{item=><div className="instance" key={item.id}><strong>{names[item.agent]} · {item.version}</strong><p className="path">{item.command}</p><span>{item.state==='succeeded'?'安装完成':item.state==='restored'?'历史已结束':item.state==='prepared'?'尚未发布安装':'安装未完成 · 请重新检测'}</span>{item.failureCode&&<p className="notice">{item.failureCode}</p>}</div>}</TaskHistory>
     {exported&&<ConfirmDialog title="导出已保存" onClose={()=>setExported(undefined)}><p>{exported.sensitive?'导出包含完整恢复材料和敏感配置，请私下保管。':'日志仅包含工具、版本、阶段、时间和错误码，不含配置或本地路径。'}</p><p className="path">{exported.directory}</p><div className="dialog-actions"><button onClick={()=>setExported(undefined)}>关闭</button><button className="primary" onClick={()=>void revealExport(exported.id).catch(e=>setError(errorMessage(e)))}>在访达中打开</button></div></ConfirmDialog>}
   </>;
 }
