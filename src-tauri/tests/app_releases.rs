@@ -167,6 +167,8 @@ fn daily_throttle_manual_checks_network_failure_cache_and_rate_backoff_are_disti
     assert_eq!(result.successful_at, Some(1000));
     assert_eq!(result.checked_at, Some(2000));
     assert!(releases::should_fetch(&c, true, 2001));
+    assert!(!releases::should_fetch(&c, false, 61_999));
+    assert!(releases::should_fetch(&c, false, 62_000));
     releases::apply(
         &mut c,
         Err(FetchFailure {
@@ -177,6 +179,7 @@ fn daily_throttle_manual_checks_network_failure_cache_and_rate_backoff_are_disti
     );
     assert!(!releases::should_fetch(&c, true, 4000));
     assert!(releases::should_fetch(&c, true, 120_000));
+    assert!(releases::should_fetch(&c, false, 120_000));
     releases::apply(&mut c, Ok(FetchResult::NotModified), 130_000);
     assert_eq!(
         releases::evaluate(&c, "0.1.0", "aarch64", false).state,

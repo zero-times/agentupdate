@@ -11,12 +11,18 @@ export function RecoveryNotice({ plans, startup, disabled, onInspect }: {
   disabled: boolean;
   onInspect: (transaction: UpdateTransaction) => void;
 }) {
-  const pending = plans.flatMap(plan => plan.transactions).filter(tx => ['needs_recovery','recovery_failed'].includes(tx.stage));
+  // Show only the latest outcome per installation, so an eventual success clears old failures.
+  const latest = new Map<string, UpdateTransaction>();
+  for (const tx of plans.flatMap(plan => plan.transactions)) {
+    const previous = latest.get(tx.installation.id);
+    if (!previous || tx.createdAt > previous.createdAt) latest.set(tx.installation.id, tx);
+  }
+  const pending = [...latest.values()].filter(tx => ['needs_recovery','recovery_failed'].includes(tx.stage));
   if (!pending.length) return null;
-  return <div className="notice" role="status" data-recovery-notice>
-    <strong>有 {pending.length} 项更新未完成</strong>
+  return <details className="recovery-history failure-history" data-recovery-notice>
+    <summary>最近更新未完成 · {pending.length} 个安装实例</summary>
     <p>请重新检测后重试升级；命令不可用时可通过官方渠道重新安装。</p>
-    {pending.map(tx => {
+    {pending.slice(0,5).map(tx => {
       const material = startup?.items.find(item => item.transactionId === tx.id);
       return <div key={tx.id}>
         <span>{tx.installation.agentId === 'claude' ? 'Claude Code CLI' : tx.installation.agentId === 'codex' ? 'Codex CLI' : tx.installation.agentId === 'gemini' ? 'Gemini CLI' : 'Deepseek Harness'} · {tx.installation.version} → {tx.target.version}</span>{' '}
@@ -24,5 +30,6 @@ export function RecoveryNotice({ plans, startup, disabled, onInspect }: {
         {material && !material.materialReady && <p>备份材料无法验证（{material.materialError}）。请保留诊断记录。</p>}
       </div>;
     })}
-  </div>;
+    {pending.length > 5 && <p className="muted">其余失败详情可在更新历史中查看。</p>}
+  </details>;
 }

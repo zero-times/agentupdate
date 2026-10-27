@@ -217,6 +217,7 @@ pub fn should_fetch(cache: &Cache, manual: bool, now: u64) -> bool {
     (manual && cache.error_code.as_deref() != Some("RELEASE_RATE_LIMIT")
         || now >= cache.retry_after)
         && (manual
+            || cache.error_code.is_some()
             || cache
                 .checked_at
                 .is_none_or(|t| now < t || now.saturating_sub(t) >= DAY))
